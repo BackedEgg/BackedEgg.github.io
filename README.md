@@ -9,7 +9,6 @@ GitHub Pages에서 빌드 없이 바로 공개할 수 있는 정적 블로그입
 - `/categories/` — 7개 카테고리 선택
 - `/categories/<slug>/` — 카테고리별 독립 페이지
 - `/about/` — Raw_Egg 소개
-- `/posts/first-note/` — 첫 글
 
 카테고리: 개발, CTF/Wargame, Bug Bounty, 블로그/기술문서, 논문/컨퍼런스, 공모전, 자격증.
 
@@ -25,7 +24,7 @@ GitHub 공식 안내: https://docs.github.com/en/pages/quickstart
 
 ## 글 추가와 수정
 
-`build.cjs` 상단의 `cats` 배열과 `post` 내용을 수정한 뒤, 이 폴더에서 `node build.cjs`를 실행하면 정적 페이지가 다시 생성됩니다. 현재 스크립트는 첫 글 한 편을 위한 간단한 구조입니다. 글을 여러 편으로 확장하려면 `posts` 배열과 반복 생성 방식으로 바꾸세요.
+`build.cjs` 상단의 `cats` 배열을 수정한 뒤, 이 폴더에서 `node build.cjs`를 실행하면 정적 페이지가 다시 생성됩니다. 현재 게시글은 없습니다. 새 글을 추가하려면 `build.cjs`에 글 데이터, 글 페이지 생성, 목록 표시를 함께 구현해야 합니다. 생성된 HTML만 직접 고치면 다음 빌드 때 덮어써집니다.
 
 자기소개 문구는 `build.cjs`의 `home`과 `about` 페이지 부분에서 수정할 수 있습니다. 색상과 장식은 `style.css`, `egg-extra.css`에서 바꿀 수 있습니다. `app.js`는 모바일 메뉴, 색상 모드, 목록 검색을 담당합니다.
 
