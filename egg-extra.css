@@ -1,0 +1,15 @@
+/* A playful first screen and restrained glowing type, inspired by the user's references. */
+.hero{position:relative;overflow:hidden;background:radial-gradient(circle at 70% 35%,#ffe5a3 0,#fff2cd 24%,transparent 52%),linear-gradient(145deg,#fffaf0,#fff2d7 58%,#f8dfab)}
+.hero:before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.46;background-image:radial-gradient(circle,#d59547 1px,transparent 1.8px);background-size:36px 36px;mask-image:linear-gradient(90deg,transparent,black 45%,black 90%)}
+.hero:after{content:'';position:absolute;inset:auto 0 0;height:8px;background:repeating-linear-gradient(90deg,#e5b565 0 20px,#f5dcae 20px 40px)}
+.hero-copy,.egg-scene{position:relative;z-index:1}
+.hero h1 em{color:#c5780b;text-shadow:0 0 18px #ffca6f80,1px 1px 0 #fff7e6}
+.hero .kicker,.page-head .kicker{font-weight:500;text-shadow:0 0 11px #ffbb5a88}
+.spark{filter:drop-shadow(0 0 6px #ffbb42);animation:twinkle 3.4s ease-in-out infinite}.s2{animation-delay:1.6s}
+.logo .period,.section-title .kicker{filter:drop-shadow(0 0 5px #ffb43f)}
+.cat-card:hover .cat-icon{box-shadow:0 0 20px #f6b54b55}
+@keyframes twinkle{0%,100%{opacity:.45;transform:scale(.78) rotate(-10deg)}50%{opacity:1;transform:scale(1.15) rotate(10deg)}}
+body.dark .hero{background:radial-gradient(circle at 70% 35%,#6b461b 0,#3b2e20 32%,transparent 64%),linear-gradient(145deg,#29251e,#312720)}
+body.dark .hero:before{opacity:.22}
+body.dark .hero h1 em{color:#ffc56b;text-shadow:0 0 18px #f8aa4570}
+@media(prefers-reduced-motion:reduce){.spark{animation:none}}
