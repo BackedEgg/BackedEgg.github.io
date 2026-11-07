@@ -30,4 +30,3 @@ GitHub 공식 안내: https://docs.github.com/en/pages/quickstart
 자기소개 문구는 `build.cjs`의 `home`과 `about` 페이지 부분에서 수정할 수 있습니다. 색상과 장식은 `style.css`, `egg-extra.css`에서 바꿀 수 있습니다. `app.js`는 모바일 메뉴, 색상 모드, 목록 검색을 담당합니다.
 
 현재 공개 이력으로 검증할 수 없는 경력이나 수상 내역은 넣지 않았습니다. 빈 카테고리는 기록을 추가할 때까지 안내 문구가 보입니다.
-
