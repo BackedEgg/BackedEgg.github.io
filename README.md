@@ -6,11 +6,11 @@ GitHub Pages에서 빌드 없이 바로 공개할 수 있는 정적 블로그입
 
 - `/` — 계란 일러스트가 있는 홈
 - `/archive/` — 전체 글과 검색
-- `/categories/` — 7개 카테고리 선택
+- `/categories/` — 8개 카테고리 선택
 - `/categories/<slug>/` — 카테고리별 독립 페이지
 - `/about/` — Raw_Egg 소개
 
-카테고리: 개발, CTF/Wargame, Bug Bounty, 블로그/기술문서, 논문/컨퍼런스, 공모전, 자격증.
+카테고리: 개발, CTF/Wargame, Bug Bounty, 블로그/기술문서, 논문/컨퍼런스, 공모전, 자격증, Poc 구현.
 
 ## GitHub Pages 게시
 
