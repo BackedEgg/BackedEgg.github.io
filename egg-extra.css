@@ -74,3 +74,5 @@ body.dark .main{background:#282118}body.dark .hero-new{background:radial-gradien
 @media(max-width:720px){.hero-new{min-height:690px;padding:36px 16px 55px}.egg-stage{height:390px}.egg-big{transform:scale(.84) rotate(-9deg);animation:none}.egg-halo{width:330px;height:330px}.halo-two{width:390px;height:390px}.hero-slogan{font-size:clamp(27px,6vw,40px)!important}.intro-band p{font-size:14px}.explore-section{padding-block:65px}.category-nav{padding:12px}.page-head:after{font-size:23px;top:10%}}
 @media(max-width:500px){.hero-new{min-height:630px}.egg-stage{height:330px}.egg-big{transform:scale(.7) rotate(-9deg)}.egg-halo{width:270px;height:270px}.halo-two{width:320px;height:320px}.egg-orbit{font-size:30px}.orbit-one{left:15px}.orbit-two{right:12px}.hero-slogan{font-size:30px!important}.intro-spark{display:none}.cat-card{min-height:185px}.cat-grid{gap:18px}}
 @media(prefers-reduced-motion:reduce){.egg-big,.halo-two,.egg-orbit,.hero-starfield span,.cat-card:before,.scroll-cue span{animation:none}}
+.cat-grid .cat-card:last-child:nth-child(3n+1){grid-column:2}
+@media(max-width:1000px){.cat-grid .cat-card:last-child:nth-child(3n+1){grid-column:auto}}
