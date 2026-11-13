@@ -11,7 +11,7 @@ GitHub Pages에서 빌드 없이 바로 공개할 수 있는 정적 블로그입
 - `/about/` — Raw_Egg 소개
 - `/posts/my-values-and-goals/` — 첫 기록
 
-카테고리: 개발, CTF/Wargame, Bug Bounty, 블로그/기술문서, 논문/컨퍼런스, 공모전, 자격증, Poc 구현.
+카테고리: 개발, CTF/Wargame, Bug Bounty, 블로그/기술문서, 논문/컨퍼런스/세미나, 공모전, 자격증, Poc 구현.
 
 ## GitHub Pages 게시
 

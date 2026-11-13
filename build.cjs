@@ -6,7 +6,7 @@ const cats=[
   ['ctf-wargame','CTF/Wargame','ctf나가야겟지','⚑'],
   ['bug-bounty','Bug Bounty','돈벌어야겟지','◎'],
   ['blog-docs','블로그/기술문서','블로그 써야겟지','✎'],
-  ['papers-conferences','논문/컨퍼런스','... 해야겟지?','▤'],
+  ['papers-conferences','논문/컨퍼런스/세미나','... 해야겟지?','▤'],
   ['competitions','공모전','공모전 나가야겟지','✳'],
   ['certifications','자격증','자격증따야겟지','✦'],
   ['poc-implementation','Poc 구현','Poc 구현 해봐야겟지','⚙']
