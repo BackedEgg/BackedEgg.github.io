@@ -9,6 +9,7 @@ GitHub Pages에서 빌드 없이 바로 공개할 수 있는 정적 블로그입
 - `/categories/` — 8개 카테고리 선택
 - `/categories/<slug>/` — 카테고리별 독립 페이지
 - `/about/` — Raw_Egg 소개
+- `/posts/my-values-and-goals/` — 첫 기록
 
 카테고리: 개발, CTF/Wargame, Bug Bounty, 블로그/기술문서, 논문/컨퍼런스, 공모전, 자격증, Poc 구현.
 
@@ -24,7 +25,7 @@ GitHub 공식 안내: https://docs.github.com/en/pages/quickstart
 
 ## 글 추가와 수정
 
-`build.cjs` 상단의 `cats` 배열을 수정한 뒤, 이 폴더에서 `node build.cjs`를 실행하면 정적 페이지가 다시 생성됩니다. 현재 게시글은 없습니다. 새 글을 추가하려면 `build.cjs`에 글 데이터, 글 페이지 생성, 목록 표시를 함께 구현해야 합니다. 생성된 HTML만 직접 고치면 다음 빌드 때 덮어써집니다.
+새 글은 `posts/새-글-주소/` 폴더를 만들고 `meta.json`과 `content.txt`를 넣은 다음, 이 폴더에서 `node build.cjs`를 실행하면 기록 목록과 글 페이지가 생성됩니다. `meta.json`에는 `title`, `date`(YYYY-MM-DD), `excerpt`, `category`, `tags`를 적습니다. 전체 기록에만 올릴 글은 `category`를 `null`로 두고, 카테고리에 올릴 글은 `cats` 배열의 주소(slug)를 적습니다. `content.txt`의 빈 줄은 문단을 나누고 `Q.`로 시작하는 문단은 질문 제목, `A1.`처럼 번호가 붙은 문단은 답변 제목으로 표시됩니다. 생성된 HTML만 직접 고치면 다음 빌드 때 덮어써집니다.
 
 자기소개 문구는 `build.cjs`의 `home`과 `about` 페이지 부분에서 수정할 수 있습니다. 색상과 장식은 `style.css`, `egg-extra.css`에서 바꿀 수 있습니다. `app.js`는 모바일 메뉴, 색상 모드, 목록 검색을 담당합니다.
 
