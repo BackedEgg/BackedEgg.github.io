@@ -81,3 +81,4 @@ body.dark .main{background:#282118}body.dark .hero-new{background:radial-gradien
 .article-body h2:first-child{margin-top:0}
 .article-body p{overflow-wrap:anywhere}
 body.dark .article-body h2{background:#423221;color:#ffe8bd}body.dark .article-body h3{color:#f9c675}
+.article-body .answer-lead{font-weight:700;color:#754715}body.dark .article-body .answer-lead{color:#ffe0a2}
