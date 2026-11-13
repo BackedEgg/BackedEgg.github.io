@@ -1,0 +1,13 @@
+{
+  "title": "Web - backup leak",
+  "date": "2026-10-10",
+  "category": "ctf-wargame",
+  "excerpt": "문제 설명 : 평범해 보이는 회사 소개 홈페이지이다. 목표: 배포 흔적을 추적해 서버에 남은 백업 아카이브를 찾고, 그 안의 삭제된 데이터를 복원하라 write up: 페이지에서 누를 수 있는것들은…",
+  "previewTitle": "Web - backup leak",
+  "previewExcerpt": "문제 설명 : 평범해 보이는 회사 소개 홈페이지이다. 목표: 배포 흔적을 추적해 서버에 남은 백업 아카이브를 찾고, 그 안의 삭제된 데이터를 복원하라 write up: 페이지에서 누를 수 있는것들은…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/12",
+  "sourceCategory": "STUDY/Write up"
+}

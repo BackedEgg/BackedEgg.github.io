@@ -1,0 +1,13 @@
+{
+  "title": "Web - Profile switch",
+  "date": "2026-10-10",
+  "category": "ctf-wargame",
+  "excerpt": "문제 설명: '내 프로필 보기'링크를 누르면 자기소개와 비공개 메모가 담긴 내 프로필을 볼 수 있는 사진관 명부 서비스이다. 목표: 다른 사용자의 프로필을 열람하라 write up: 페이지에 들어가…",
+  "previewTitle": "Web - Profile switch",
+  "previewExcerpt": "문제 설명: '내 프로필 보기'링크를 누르면 자기소개와 비공개 메모가 담긴 내 프로필을 볼 수 있는 사진관 명부 서비스이다. 목표: 다른 사용자의 프로필을 열람하라 write up: 페이지에 들어가…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/10",
+  "sourceCategory": "STUDY/Write up"
+}

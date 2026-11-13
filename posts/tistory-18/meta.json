@@ -1,0 +1,13 @@
+{
+  "title": "Web - Cart Session",
+  "date": "2026-10-12",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명 : 방문만 해도 장바구니가 생기는 밴드 굿즈샵이다. 상품을 담으면 'cart_id'쿠키로 식별되는 내 장바구니에 그대로 쌓인다. 목표 : 다른사람의 장바구니를 열어라 write up : 페…",
+  "previewTitle": "Web - Cart Session",
+  "previewExcerpt": "문제설명 : 방문만 해도 장바구니가 생기는 밴드 굿즈샵이다. 상품을 담으면 'cart_id'쿠키로 식별되는 내 장바구니에 그대로 쌓인다. 목표 : 다른사람의 장바구니를 열어라 write up : 페…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/18",
+  "sourceCategory": "STUDY/Write up"
+}

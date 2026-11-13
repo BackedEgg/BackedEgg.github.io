@@ -1,0 +1,170 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Raw_Egg의 개발·보안 학습 기록"><meta name="theme-color" content="#fff9ed"><title>웹(3)-SQL · Raw_Egg</title><link rel="stylesheet" href="../../style.css"><link rel="stylesheet" href="../../egg-extra.css"><script src="../../app.js" defer></script></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><aside class="rail"><a class="logo" href="../../" aria-label="Raw_Egg 홈"><span class="logo-shape"><i></i></span><span>Raw_Egg<span class="period">.</span></span></a><nav class="rail-nav" aria-label="주 메뉴"><a  href="../../">Home</a><a aria-current="page" href="../../archive/">Records</a><a  href="../../categories/">Categories</a><a  href="../../about/">About</a></nav><div class="rail-bottom"><span>make me baked<span class="period">.</span></span><button class="theme" type="button" aria-label="색상 모드 전환">◐ <span>Dark</span></button></div></aside><header class="mobile-head"><a href="../../">🥚 Raw_Egg.</a><button class="menu" type="button" aria-expanded="false" aria-label="메뉴 열기">☰</button></header><main id="main" class="main"><article class="article"><a class="back" href="../../archive/">← 기록으로</a><header class="article-head"><span class="kicker">2026-11-10 · RECORD</span><h1>웹(3)-SQL</h1><p>SQL Injection 을 배우려고 했을때 가장 막혔던 부분은 SQL 구문이 어떻게 작성되는지, 어떤식으로 동작하는지였다. 그래서 처음부터 조금씩 배워보려고한다. 우선 SQL이 무엇인지부터 알 필…</p></header><div class="article-body"><p><span>SQL Injection 을 배우려고 했을때 가장 막혔던 부분은 SQL 구문이 어떻게 작성되는지, 어떤식으로 동작하는지였다. 그래서 처음부터 조금씩 배워보려고한다.</span><span></span></p>
+<p>&nbsp;</p>
+<p>우선 SQL이 무엇인지부터 알 필요가 있다.</p>
+<p>&nbsp;</p>
+<p><b><span>SQL</span></b>(Structured Query Language, 구조화된 쿼리 언어)은 관계형 데이터베이스 관리시스템(RDBMS)의 데이터를 관리하고 처리하기 위해 설계된 <b>특수 목적의 프로그래밍 언어이다. </b>&nbsp;</p>
+<p>&nbsp;</p>
+<p><span>데이터베이스에 대해서 먼저 알아야할것 같다.</span><span></span></p>
+<p>&nbsp;</p>
+<p><span>우선 데이터베이스는 데이터를 체계적으로 보관하고 관리하는 공간이다.</span></p>
+<p><span>예를 들면서 이해해보자.</span></p>
+<p><span>웹사이트가 회원 정보를 저장한다면, 그 안에 </span>users<span>라는 테이블(table)을 둘 수 있다.</span></p>
+<div>
+<table>
+<tbody>
+<tr>
+<td><span>id</span></td>
+<td><span>user name</span></td>
+<td><span>password</span></td>
+</tr>
+<tr>
+<td><span>1</span></td>
+<td><span>alice</span></td>
+<td><span>apple123</span></td>
+</tr>
+<tr>
+<td><span>2</span></td>
+<td><span>bob</span></td>
+<td><span>banana456</span></td>
+</tr>
+<tr>
+<td><span>3</span></td>
+<td><span>charlie</span></td>
+<td><span>cherry789</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><span>이때, 테이블은 엑셀의 표와 비슷하게 생각하면 된다.</span></p>
+<ul>
+<li><b><span>테이블</span></b><span>: 회원 정보처럼 같은 종류의 데이터를 모아 놓은 표</span></li>
+<li><b><span>열(column)</span></b><span>: </span>id<span>, </span>username<span>, </span>password<span>처럼 각 데이터의 항목</span></li>
+<li><b><span>행(row)</span></b><span>: 회원 한 명에 관한 데이터 한 묶음</span></li>
+<li><b><span>값(value)</span></b><span>: 특정 행의 특정 열에 들어 있는 내용. 예를 들어 bob 행의 </span>id<span> 값은 </span>2</li>
+</ul>
+<p><span>위 표에서 </span>bob<span>을 찾는다는 것은 </span>username<span> 열의 값이 </span>bob<span>인 </span><b><span>행을 찾는 것이다.</span></b></p>
+<p><span>데이터베이스의 테이블(table)은 데이터를 정리해 둔 표라고 생각하면 된다. 예를 들어 </span><span>users</span><span>라는 테이블이 다음과 같다고 가정해 보자.</span></p>
+<table>
+<tbody>
+<tr>
+<td>username</td>
+<td>password</td>
+</tr>
+<tr>
+<td><span>alice</span></td>
+<td><span>apple123</span></td>
+</tr>
+<tr>
+<td><span>bob</span></td>
+<td><span>orange456</span></td>
+</tr>
+<tr>
+<td><span>admin</span></td>
+<td><span>비공개</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>가로로 놓인 한 사람의 정보는 행(row)이고, </span><span>username</span><span>, </span><span>password</span><span>처럼 세로로 구분한 항목은 열(column)이다.</span></p>
+<p><span>SQL은 이 표에 저장된 데이터를 조회하거나 변경할 때 사용하는 언어다. 그중 </span><span>SELECT</span><span>는 데이터를 조회하는 명령이다.</span></p>
+<pre><code>SELECT username
+FROM users
+WHERE username = 'bob';</code></pre>
+<p><span>순서대로 읽으면 다음과 같다.</span></p>
+<ul>
+<li><span>SELECT username</span><span>: </span><span>username</span><span> 열을 보여줘.</span></li>
+<li><span>FROM users</span><span>: </span><span>users</span><span> 테이블에서 찾아줘.</span></li>
+<li><span>WHERE username = 'bob'</span><span>: </span><span>username</span><span>이 </span><span>bob</span><span>인 행만 골라줘.</span></li>
+</ul>
+<p><span>이 쿼리를 실행하면 조건에 맞는 </span><span>bob</span><span>의 행을 찾는다. </span><span>bob</span><span>이 아닌 행은 결과에서 제외된다.</span></p>
+<p><span>여기서 </span><span>'bob'</span><span>의 작은따옴표는 </span><span>bob을 문자열 데이터로 취급하라</span><span>는 뜻이다.</span></p>
+<p>&nbsp;</p>
+<h3>간단하게 명령어를 알아보자.</h3>
+<div>
+<table>
+<tbody>
+<tr>
+<td>작업</td>
+<td>명령어</td>
+<td>의미</td>
+</tr>
+<tr>
+<td><span>데이터 찾기</span></td>
+<td>SELECT</td>
+<td><span>조건에 맞는 행을 조회</span></td>
+</tr>
+<tr>
+<td><span>데이터 추가</span></td>
+<td>INSERT</td>
+<td><span>새 행을 저장</span></td>
+</tr>
+<tr>
+<td><span>데이터 수정</span></td>
+<td>UPDATE</td>
+<td><span>기존 행의 값을 변경</span></td>
+</tr>
+<tr>
+<td><span>데이터 삭제</span></td>
+<td>DELETE</td>
+<td><span>기존 행을 제거</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>그럼 SQL Injection 을 배우고 있는 입장에서는 다음과 같은 질문을 할 수 있다.</p>
+<h2><span>로그인은 SQL로 어떻게 확인할까?</span></h2>
+<p><span>웹사이트의 로그인 기능은 사용자가 입력한 아이디와 비밀번호에 맞는 행이 있는지 조회할 수 있다.</span></p>
+<pre><code>SELECT username
+FROM users
+WHERE username = 'admin' AND password = '입력한 비밀번호';</code></pre>
+<p><span>AND</span><span>는 양쪽 조건이 </span><b><span>모두 참이어야 한다</span></b><span>는 뜻이다.</span></p>
+<p><span>따라서 </span><span>username</span><span>이 </span><span>admin</span><span>이라는 것만으로는 부족하다. </span><span>password</span><span>도 저장된 값과 같아야 해당 행이 반환된다. 정상적인 로그인이라면 이 두 조건을 모두 만족해야 한다.</span></p>
+<h2><span>그렇다면 SQL Injection은 어떻게 일어날까?</span></h2>
+<p><span>앞에서는 서버가 아이디와 비밀번호를 확인할 때 다음과 같은 SQL을 사용할 수 있다고 했다.</span></p>
+<pre><code>SELECT username
+FROM users
+WHERE username = 'admin' AND password = '입력한 비밀번호';</code></pre>
+<p><span>여기서 </span><span>'admin'</span><span>과 </span><span>'입력한 비밀번호'</span><span>는 SQL 명령이 아니라 </span><b><span>비교할 데이터</span></b><span>다. 서버는 </span><span>username</span><span>과 </span><span>password</span><span>가 모두 일치하는 행을 찾는다.</span></p>
+<p><span>문제는 웹사이트가 사용자의 입력값을 SQL 문장에 그대로 이어 붙여 만들 때 생긴다. 다음은 취약한 방식의 예시다.</span></p>
+<pre><code>query = (
+    "SELECT username FROM users WHERE username = '"
+    + username
+    + "' AND password = '"
+    + password
+    + "'"
+)</code></pre>
+<p><span>사용자가 아이디에 </span><span>admin</span><span>, 비밀번호에 </span><span>hello</span><span>를 입력하면 서버가 만든 SQL은 다음과 같다.</span></p>
+<pre><code>SELECT username
+FROM users
+WHERE username = 'admin' AND password = 'hello';</code></pre>
+<p><span>여기까지는 처음 예상한 형태와 같다. 그런데 아이디 입력란에 </span><span>admin' -- </span><span>를 넣으면 어떻게 될까? 비밀번호에는 틀린 값을 넣었다고 가정하자.</span></p>
+<pre><code>아이디: admin' -- 
+비밀번호: wrong</code></pre>
+<p><span>서버가 입력값을 그대로 이어 붙이면 다음 SQL이 만들어진다.</span></p>
+<pre><code>SELECT username
+FROM users
+WHERE username = 'admin' -- ' AND password = 'wrong';</code></pre>
+<p><span>이 문장을 앞에서부터 살펴보자.</span></p>
+<ol>
+<li><span>admin</span><span> 뒤의 </span><span>'</span><span>가 문자열을 닫는다.</span></li>
+<li><span>--</span><span> 뒤의 내용은 주석으로 처리된다.</span></li>
+<li><span>따라서 원래 있어야 할 </span><span>AND password = 'wrong'</span><span> 조건이 검사에 사용되지 않는다.</span></li>
+</ol>
+<p><span>결국 데이터베이스가 검사하는 핵심 조건은 다음과 같아진다.</span></p>
+<pre><code>WHERE username = 'admin'</code></pre>
+<p><span>admin</span><span>이라는 행이 있다면 비밀번호가 틀려도 그 행이 조회될 수 있다. </span><b><span>사용자가 입력한 글자가 단순한 데이터로 취급되지 않고 SQL 문장의 의미를 바꾼 것</span></b><span>이다. 이것이 SQL Injection의 기본 원리다.</span></p>
+<p><span>다만 행이 조회된다고 해서 모든 웹사이트에서 곧바로 로그인이 성공하는 것은 아니다. 서버가 조회 결과를 어떻게 처리하는지에 따라 실제 영향은 달라진다. 방금 예시는 조회된 행을 로그인 성공으로 처리하는 취약한 프로그램을 가정한 것이다.</span></p>
+<h3><span>--</span><span>는 왜 쓰는 걸까?</span></h3>
+<p><span>원래 SQL에는 아이디 조건 뒤에 비밀번호 조건이 이어진다.</span></p>
+<pre><code>WHERE username = 'admin' AND password = 'wrong'</code></pre>
+<p><span>입력값으로 문자열만 닫으면 뒤에 붙는 SQL 때문에 문법 오류가 날 수 있다. </span><span>--</span><span>는 그 뒤의 내용을 주석으로 만들어, 비밀번호 조건이 실행되지 않도록 하는 역할을 한다.</span></p>
+<p><span>주석 문법의 세부 조건은 데이터베이스 종류에 따라 다를 수 있다. 따라서 이 입력이 모든 웹사이트에서 똑같이 동작하는 것은 아니다.</span></p>
+<h3><span>어떻게 막을 수 있을까?</span></h3>
+<p><span>핵심은 </span><b><span>SQL 문장의 구조와 사용자 입력값을 분리하는 것</span></b><span>이다. 이를 위해 매개변수화된 쿼리(parameterized query)를 사용한다.</span></p>
+<pre><code>query = (
+    "SELECT username FROM users "
+    "WHERE username = ? AND password = ?"
+)
+cursor.execute(query, (username, password))</code></pre>
+<p><span>이 방식에서는 사용자가 </span><span>admin' -- </span><span>를 입력하더라도, 데이터베이스는 이를 SQL 명령의 일부가 아닌 </span><b><span>아이디 값 전체</span></b><span>로 취급한다. 즉, 실제로 이름이 </span><span>admin' -- </span><span>인 행을 찾을 뿐, 비밀번호 조건을 주석으로 바꾸지 못한다.</span></p>
+<p><span>여기서 한 가지 더 주의할 점이 있다. 실제 서비스에서는 비밀번호를 예시처럼 평문으로 저장하고 비교하면 안 된다. 비밀번호는 적절한 비밀번호 해시 방식으로 저장하고 검증해야 한다. SQL Injection 방지와 비밀번호의 안전한 저장은 서로 다른 문제이므로 둘 다 필요하다.</span></p>
+<p><span>정리하면, SQL Injection은 </span><b><span>입력값이 SQL 문장의 구조를 바꾸도록 프로그램이 허용했을 때</span></b><span> 발생한다. 앞에서 배운 작은따옴표는 문자열의 경계를, </span><span>AND</span><span>는 조건의 결합을, </span><span>--</span><span>는 뒤따르는 문장의 주석 처리를 이해하는 열쇠가 된다.</span></p></div><p class="source-note">원문: <a href="https://ms-egg.tistory.com/29" target="_blank" rel="noopener noreferrer">Tistory ↗</a></p><a class="back" href="../../archive/">← 기록으로</a></article><footer><span>© 2026 Raw_Egg</span><a href="https://github.com/BackedEgg" target="_blank" rel="noopener noreferrer">GitHub ↗</a></footer></main></body></html>

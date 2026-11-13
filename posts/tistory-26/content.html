@@ -1,0 +1,15 @@
+<h3>문제설명 :</h3>
+<p>이름을 입력하면 프로필 위젯 화면에 그 이름이 JSON 형태로 표시되는 페이지이다. <br>목표:&nbsp;위젯을&nbsp;그리는&nbsp;script&nbsp;블록을&nbsp;벗어나&nbsp;코드를&nbsp;실행시켜라</p>
+<h3><br>write&nbsp;up:</h3>
+<p>문제페이지에 들어가면 전광판의 임베디드 코드가 보이고 이름을 넣을 수 있는 입력 란이 보인다. guest 를 입력하면 송출화면 페이지로 넘어가는것을 확인했다. <br>메인페이지에&nbsp;이&nbsp;입력을&nbsp;처리하는&nbsp;코드가&nbsp;보인다.</p>
+<pre><code>&lt;input id="name" type="text" name="name" value="guest"&gt;</code></pre>
+<p><br>value&nbsp;란에&nbsp;저장을&nbsp;하는것&nbsp;같았다. <br><br>우선</p>
+<pre><code>&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code></pre>
+<p>로 입력해보았지만 이름으로 인식할뿐 공격으로 먹히지 않았다. <br><br>그래서&nbsp;송출화면의&nbsp;코드도&nbsp;살펴보았는데</p>
+<pre><code>&lt;script&gt;  
+  var currentUser = {"name": "guest"};
+  document.getElementById("widget").textContent = "안녕하세요, " + currentUser.name + "님";
+&lt;/script&gt;</code></pre>
+<p><br>라는&nbsp;코드를&nbsp;볼&nbsp;수&nbsp;있다. <br><br>value&nbsp;값이&nbsp;그대로&nbsp;들어간것&nbsp;같았다. <br>하지만&nbsp;따옴표가&nbsp;있고&nbsp;기존에&nbsp;script&nbsp;가&nbsp;닫히지&nbsp;않은&nbsp;상태&nbsp;때문에&nbsp;이걸&nbsp;script&nbsp;로&nbsp;인식하지&nbsp;않은듯하다 <br>그래서&nbsp;따옴표와&nbsp;괄호를&nbsp;닫아주고&nbsp;script를&nbsp;닫은다음에&nbsp;공격을&nbsp;진행해보았다. <br><br></p>
+<pre><code>"};&lt;/script&gt;&lt;script&gt;alert(document.cookie)&lt;/script&gt;</code></pre>
+<p><br><br>성공하였다.</p>

@@ -1,0 +1,13 @@
+{
+  "title": "웹(1) GET/POST",
+  "date": "2026-10-15",
+  "category": "blog-docs",
+  "excerpt": "학습 주제: HTTP Request/Response, Header/Body, GET/POST, URL 및 쿼리 문자열, Cookie/Session, 인증과 인가, 접근 제어 취약점, Burp Sui…",
+  "previewTitle": "웹(1) GET/POST",
+  "previewExcerpt": "학습 주제: HTTP Request/Response, Header/Body, GET/POST, URL 및 쿼리 문자열, Cookie/Session, 인증과 인가, 접근 제어 취약점, Burp Sui…",
+  "tags": [
+    "웹"
+  ],
+  "source": "https://ms-egg.tistory.com/23",
+  "sourceCategory": "STUDY/웹"
+}

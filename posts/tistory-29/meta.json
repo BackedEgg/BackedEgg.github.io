@@ -1,0 +1,13 @@
+{
+  "title": "웹(3)-SQL",
+  "date": "2026-11-10",
+  "category": "blog-docs",
+  "excerpt": "SQL Injection 을 배우려고 했을때 가장 막혔던 부분은 SQL 구문이 어떻게 작성되는지, 어떤식으로 동작하는지였다. 그래서 처음부터 조금씩 배워보려고한다. 우선 SQL이 무엇인지부터 알 필…",
+  "previewTitle": "웹(3)-SQL",
+  "previewExcerpt": "SQL Injection 을 배우려고 했을때 가장 막혔던 부분은 SQL 구문이 어떻게 작성되는지, 어떤식으로 동작하는지였다. 그래서 처음부터 조금씩 배워보려고한다. 우선 SQL이 무엇인지부터 알 필…",
+  "tags": [
+    "웹"
+  ],
+  "source": "https://ms-egg.tistory.com/29",
+  "sourceCategory": "STUDY/웹"
+}

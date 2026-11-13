@@ -1,0 +1,13 @@
+{
+  "title": "Web - Delayed Injection",
+  "date": "2026-11-11",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명 : 메모를 남기면 소유자 이름과 함께 저장되는 입주사 메모장이다. 관리자 화면에는 소유자별 통계를 볼 수 있다. 목표 : 나중에 실행되는 경로를 통해 주입을 성사시켜라. POST /api/…",
+  "previewTitle": "Web - Delayed Injection",
+  "previewExcerpt": "문제설명 : 메모를 남기면 소유자 이름과 함께 저장되는 입주사 메모장이다. 관리자 화면에는 소유자별 통계를 볼 수 있다. 목표 : 나중에 실행되는 경로를 통해 주입을 성사시켜라. POST /api/…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/34",
+  "sourceCategory": "STUDY/Write up"
+}

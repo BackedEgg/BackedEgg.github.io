@@ -1,0 +1,144 @@
+<p>웹해킹을 하기위해서는 JWT, Cookie, Session이 무엇인지 알필요가 있다.</p>
+<p>이에 대해 이해하기 위해 정리해보았다.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>이 JWT, Cookie, Session 를 이해하기 위해 다음과 같은 예시를 들어볼 수 있다.</p>
+<pre><code>1. 로그인 화면을 연다.
+2. 아이디와 비밀번호를 제출한다.
+3. 내 정보 페이지를 연다.
+4. 게시글을 작성한다.</code></pre>
+<p>&nbsp;</p>
+<p>서버에는 단계별로 각각 별도의 HTTP 요청이 도착한다. 세 번째 요청을 받았을 때 서버는 이 요청을 보낸 사람이</p>
+<p>앞에서 로그인한 사람인가?를 알아야 한다. 매번 비밀번호를 다시 보내는 방식은 너무 번거롭기 때문이다.</p>
+<p>그래서 서버는 로그인에 성공하면 이후 요청에 사용할 일종의 증표를 발급하고 브라우저가 다음 요청에 그 증표를 보낸다.</p>
+<p>&nbsp;</p>
+<p>이때, 이 증표로 Session ID를 사용할 수도 있고, JWT를 사용할 수도 있다. 또한, 브라우저가 그 증표를 보관하고 보내는 방법으로 cookie를 사용할 수 있다.</p>
+<p>&nbsp;</p>
+<h3>Cookie란?</h3>
+<p><b><span>브라우저가 값을 저장하고 요청에 실어 보내는 방식</span></b><span>이다</span><b><span>.</span></b></p>
+<p>http 쿠키는 서버가 브라우저에 저장하도록 요청할 수 있는 작은 이름 = 값 데이터이다. 서버는 응답의 set-cookie 헤더로 쿠키를 설정하고, 브라우저는 적용 범위에 맞는 후속 요청에 cookie 헤더로 그 값을 보낸다.</p>
+<p>&nbsp;</p>
+<p>예를 들어 서버가 다음 응답을 보낸다고 가정하자.</p>
+<pre><code>HTTP/1.1 200 OK 
+Set-Cookie: theme=dark; Path=/  // 서버가 브라우저에 해당 쿠키(theme = dark)를 설정함.,
+이때 path=/는 어디로 보낼지 결정.</code></pre>
+<p>&nbsp;</p>
+<p>이때, 브라우저는 이후 해당 쿠키가 적용 되는 요청에서 다음처럼 보낼 수 있다.</p>
+<p>(앞서 말했듯, 쿠키는 방식이기 때문에 여기다가 session ID 를 넣을수도, JWT를 넣을수도 있다.)</p>
+<pre><code>GET /settings HTTP/1.1
+Host: example.com
+Cookie: theme=dark //브라우저가 저장된 쿠키(theme=dark)를 서버에 보냄</code></pre>
+<p>&nbsp;</p>
+<p>참고로, 로그인 관련 쿠키를 이해할 때 다음과 같은 속성이 들어있을 수 있다.</p>
+<table>
+<tbody>
+<tr>
+<td>Path=/</td>
+<td><span>어느 경로의 요청에 보낼지 정함</span></td>
+<td>/<span>이면 해당 호스트의 여러 경로에 적용됨</span></td>
+</tr>
+<tr>
+<td>Secure</td>
+<td><span>HTTPS 연결에서만 보내도록 제한</span></td>
+<td>암호화기능은 아니고 전송조건.</td>
+</tr>
+<tr>
+<td>HttpOnly</td>
+<td><span>페이지의 JavaScript가 쿠키 값을 직접 읽지 못하게 함</span></td>
+<td>사용자의 권한으로 요청을 보내는 위험은 해소안됨.</td>
+</tr>
+<tr>
+<td>SameSite</td>
+<td><span>다른 사이트에서 시작된 요청에 쿠키를 언제 보낼지 제한</span></td>
+<td><span>CSRF 방어에 도움을 줌</span></td>
+</tr>
+<tr>
+<td>Expires<span>·</span><span>`Max-Age</span><span>`</span></td>
+<td><span>브라우저에 저장할 기간을 지정</span></td>
+<td><span>서버의 로그인 유효기간과는 별개</span></td>
+</tr>
+<tr>
+<td>Domain</td>
+<td><span>어떤 도메인 범위에 보낼지 지정</span></td>
+<td><span>범위를 넓히면 다른 하위 도메인도 관련될 수 있음</span></td>
+</tr>
+</tbody>
+</table>
+<p>&nbsp;</p>
+<p>또한 브라우저는 쿠키의 범위와 조건이 맞으면 요청에 쿠키를 실어보낸다. 그래서 개발자가 매 요청마다 쿠키값을 js로 읽어 직접 붙이지 않아도 된다는 장점이 있다. 하지만 그래서 반대로, 이 자동전송 때문에 CSRF를 고려해야한다. 공격자가 사용자의 브라우저를 이용해 다른 사이트로 요청을 보내도록 유도하면, 조건에 따라 브라우저가 그 사이트의 로그인 쿠키를 함께 보낼 수 있기 때문이다.</p>
+<p>&nbsp;</p>
+<h3>Session/Session ID란?</h3>
+<p>웹 로그인에서 session은 보통 서버가 이용자의 연속된 요청을 연결해 관리하는 상태를 뜻한다.</p>
+<p>Session ID는 서버의 기록을 찾기 위한 일종의 식별자이다.</p>
+<p>다음과 같은 방식으로 작동한다.&nbsp;</p>
+<pre><code>1. 로그인 성공
+   서버: 세션 저장소에 사용자·로그인 상태 등을 기록
+   서버 → 브라우저: session ID를 전달
+                  (보통 Set-Cookie 사용)
+
+2. 이후 사용자가 기능 요청
+   브라우저 → 서버: session ID를 전달
+                  (보통 Cookie 사용)
+
+3. 서버에서 확인
+   session ID로 세션 저장소의 기록을 찾음
+   → 세션이 유효한지 확인
+   → 해당 사용자가 이 기능을 사용할 권한이 있는지 확인
+   → 허용되면 요청 처리</code></pre>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>조금 더 자세히 보자.</p>
+<p>&nbsp;</p>
+<p>로그인</p>
+<pre><code>POST /login HTTP/1.1
+Host: example.com
+
+username=alice&amp;password=...</code></pre>
+<p>&nbsp;</p>
+<p>서버가 로그인에 성공하고 무작위 session ID를 발급한다.</p>
+<pre><code>HTTP/1.1 200 OK
+Set-Cookie: session=A7f9...x2; Path=/; Secure; HttpOnly; SameSite=Lax</code></pre>
+<p><span>브라우저가 다음 페이지를 열 때는 쿠키를 보낸다.</span></p>
+<pre><code>GET /mypage HTTP/1.1
+Host: example.com
+Cookie: session=A7f9...x2</code></pre>
+<p>&nbsp;</p>
+<p>만약 로그아웃을 하면?</p>
+<p>정상적인 서버라면 서버가 해당 세션을 무효화시켜야한다. (브라우저에서 쿠키를 지우는것 != 서버에서 세션을 무효화하는것)</p>
+<p>&nbsp;</p>
+<h3>session Id를 보호해야 하는 이유?</h3>
+<p>session ID는 대게 bearer credental 처럼 동작한다.</p>
+<p>모든 사이트들이 그런것은 아니지만, 서버가 ID만으로 세션 소유자를 식별한다면, 유효한 ID를 탈취한 사람은 해당 이용자처럼 요청할 수 있다.</p>
+<p>&nbsp;</p>
+<h3>JWT란?</h3>
+<p>JWT = JSON Web Token</p>
+<p>으로 JSON 객체를 사용해 두 당사자(예: 클라이언트와 서버) 간에 정보를 안전하고 간결하게 전송하기 위한 개방형 표준(RFC 7519)이다. (JSON 형태로 표현하는 토큰형식)이때, 정보에는 토큰의 대상이 누구인지, 언제 만료되는지 등이 담길 수 있다.</p>
+<p>&nbsp;</p>
+<p>이 JWT는 서명이나 MAC으로 무결성을 보호하는 형태로 사용할 수 있고, 필요에 따라 암호화된 형태도 정의되어 있다.</p>
+<p>우리가 웹 로그인에서 흔히 보는 점(.) 세 부분의 JWT는 보통 서명된 JWT 를 가리킨다.</p>
+<p>&nbsp;</p>
+<p>전형적인 형태는 다음과 같다.</p>
+<pre><code>header.payload.signature</code></pre>
+<p>&nbsp;</p>
+<p>이때 header에는</p>
+<p>사용한 서명 알고리즘, 토큰유형이 들어갈 수 있다</p>
+<p>이때, payload 에는</p>
+<p>사용자 식별자, 발급자, 만료 시각 등이 들어갈 수 있다.</p>
+<p>이때, Signature 에는</p>
+<p>&nbsp;서명 또는 MAC값 등이 들어갈 수 있다.</p>
+<p>&nbsp;</p>
+<p>서명이 암호화 자체를 뜻하는것은 아니다.</p>
+<p>서명은 주로 변조 여부와 발급 주체를 검증하는 데 사용한다. 만약, 내용을 숨겨야한다면 별도의 설계가 필요한다.</p>
+<p>(JWT 표준에는 암호화된 형태인 JWE도 있다.)</p>
+<p>&nbsp;</p>
+<h3>Session ID와 JWT의 차이?</h3>
+<p>&nbsp;</p>
+<p>가장 큰 차이로는 브라우저가 보낸 값을 서버가 어떻게 확인하느냐이다.</p>
+<p>&nbsp;</p>
+<p>Session Id를 쓰는 경우 :</p>
+<p>브라우저가 보내는 값은 보통 서버의 기록을 찾는 번호이다.</p>
+<p>또한 세션아이디 자체에 보통 사용자 정보가 들어있지 않다. 서버에 저장된 기록을 찾아야 의미를 알 수 있다.</p>
+<p>&nbsp;</p>
+<p>JWT를 쓰는 경우 :</p>
+<p>JWT에는 사용자 식별자, 만료 시각 등 정보를 담을 수 있다. 서버는 JWT의 서명과 필요한 정보를 검증한다.</p>
+<p>매 요청마다 서버의 세션 저장소에서 로그인 기록을 찾지않아도 토큰을 검증할 수 있다는 장점이 있다.</p>

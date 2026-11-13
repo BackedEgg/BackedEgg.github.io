@@ -1,0 +1,13 @@
+{
+  "title": "Web - Logged Header Injection",
+  "date": "2026-11-11",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명: 모든 요청이 접속 로그에 기록되는 사내 모임 사이트이다. 관리자는 요약 리포트를 볼 수 있다. 목표: 관리자가 보는 로그에 임의의 값을 심어라 집계 보기를 누르면 userAgent라는 칸…",
+  "previewTitle": "Web - Logged Header Injection",
+  "previewExcerpt": "문제설명: 모든 요청이 접속 로그에 기록되는 사내 모임 사이트이다. 관리자는 요약 리포트를 볼 수 있다. 목표: 관리자가 보는 로그에 임의의 값을 심어라 집계 보기를 누르면 userAgent라는 칸…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/32",
+  "sourceCategory": "STUDY/Write up"
+}

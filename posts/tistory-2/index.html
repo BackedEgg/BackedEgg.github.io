@@ -1,0 +1,151 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Raw_Egg의 개발·보안 학습 기록"><meta name="theme-color" content="#fff9ed"><title>정보보호전문 실습교육 네트워크 1 · Raw_Egg</title><link rel="stylesheet" href="../../style.css"><link rel="stylesheet" href="../../egg-extra.css"><script src="../../app.js" defer></script></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><aside class="rail"><a class="logo" href="../../" aria-label="Raw_Egg 홈"><span class="logo-shape"><i></i></span><span>Raw_Egg<span class="period">.</span></span></a><nav class="rail-nav" aria-label="주 메뉴"><a  href="../../">Home</a><a aria-current="page" href="../../archive/">Records</a><a  href="../../categories/">Categories</a><a  href="../../about/">About</a></nav><div class="rail-bottom"><span>make me baked<span class="period">.</span></span><button class="theme" type="button" aria-label="색상 모드 전환">◐ <span>Dark</span></button></div></aside><header class="mobile-head"><a href="../../">🥚 Raw_Egg.</a><button class="menu" type="button" aria-expanded="false" aria-label="메뉴 열기">☰</button></header><main id="main" class="main"><article class="article"><a class="back" href="../../archive/">← 기록으로</a><header class="article-head"><span class="kicker">2026-09-17 · RECORD</span><h1>정보보호전문 실습교육 네트워크 1</h1><p>decimal(unsigned) hexadecimal binary decimal(signed) 0 0 0000 0 1 1 0001 1 2 2 0010 2 3 3 0011 3 4 4 0100 4 5 …</p></header><div class="article-body"><table>
+<tbody>
+<tr>
+<td>decimal(unsigned)</td>
+<td>hexadecimal</td>
+<td>binary</td>
+<td>decimal(signed)</td>
+</tr>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>0000</td>
+<td>0</td>
+</tr>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>0001</td>
+<td>1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>2</td>
+<td>0010</td>
+<td>2</td>
+</tr>
+<tr>
+<td>3</td>
+<td>3</td>
+<td>0011</td>
+<td>3</td>
+</tr>
+<tr>
+<td>4</td>
+<td>4</td>
+<td>0100</td>
+<td>4</td>
+</tr>
+<tr>
+<td>5</td>
+<td>5</td>
+<td>0101</td>
+<td>5</td>
+</tr>
+<tr>
+<td>6</td>
+<td>6</td>
+<td>0110</td>
+<td>6</td>
+</tr>
+<tr>
+<td>7</td>
+<td>7</td>
+<td>0111</td>
+<td>7</td>
+</tr>
+<tr>
+<td>8</td>
+<td>8</td>
+<td>1000</td>
+<td>-8</td>
+</tr>
+<tr>
+<td>9</td>
+<td>9</td>
+<td>1001</td>
+<td>-7</td>
+</tr>
+<tr>
+<td>10</td>
+<td>10</td>
+<td>1010</td>
+<td>-6</td>
+</tr>
+<tr>
+<td>11</td>
+<td>11</td>
+<td>1011</td>
+<td>-5</td>
+</tr>
+<tr>
+<td>12</td>
+<td>12</td>
+<td>1100</td>
+<td>-4</td>
+</tr>
+<tr>
+<td>13</td>
+<td>13</td>
+<td>1101</td>
+<td>-3</td>
+</tr>
+<tr>
+<td>14</td>
+<td>14</td>
+<td>1110</td>
+<td>-2</td>
+</tr>
+<tr>
+<td>15</td>
+<td>15</td>
+<td>1111</td>
+<td>-1</td>
+</tr>
+</tbody>
+</table>
+<p>&nbsp;</p>
+<p>nibble : byte의 절반의 의미, 4bit , 16가지의 경우의 수를 가짐 (0~15, 0x0~ 0xF)</p>
+<p>&nbsp;</p>
+<p>Byte order</p>
+<p>NBO( network byte order) : 네트워크레벨에서 숫자를 표현하는 순서( 무조건 정방향)</p>
+<p>HBO( host byte order) : 호스트 레벨에서 숫자를 표현하는 순서 (방향은 LE인지 BE인지에 따라 다름)</p>
+<p>&nbsp;</p>
+<p>LE(little-endian) : HBO != NBO</p>
+<p>BE(big-endian) : HBO == NBO</p>
+<p>&nbsp;</p>
+<p>실습</p>
+<p>코드 레벨에서 NBO 와 HBO 와의 변환 실습해보기</p>
+<p>&nbsp;</p>
+<p>실습방법</p>
+<p>&nbsp;</p>
+<p>1. kali linux, wireshark 준비</p>
+<p>wireshark 패킷 잡을 준비 -&gt;</p>
+<p>kali linux prompt에는 curl <a href="http://www.naver.com:4660/">http://www.naver.com:4660</a> -&gt; (포트번호 4660을 쓰겠다는 말, 당연히 응답이 오지 않음.)&nbsp;</p>
+<p>wireshark 패킷을 잡으면 4660 패킷이 잡힘.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p></p><figure><span><img src="image-1.png"></span><figcaption>destination port(4660) 가 12 34 즉, 메모리에서 0x1234로 처리된다는것을 알 수 있음</figcaption>
+</figure>
+<p></p>
+<p>&nbsp;</p>
+<p><a href="https://gitlab.com/gilgil/byte-order-test.git">2. 직접 처리해보기</a></p>
+<p><a href="https://gitlab.com/gilgil/byte-order-test.git">https://gitlab.com/gilgil/byte-order-test.git</a><span><span>&nbsp;</span>repository를 clone받아 실습을 진행.</span></p>
+<p>git clone 으로 코드를 받은뒤, vim 을 열어서 실습.</p>
+<p>&nbsp;</p>
+<p></p><figure><span><img src="image-2.png"></span><figcaption>git clone, vim으로 byte-order-test.cpp를 연 모습</figcaption>
+</figure>
+<p></p>
+<p>&nbsp;</p>
+<p></p><figure><span><img src="image-3.png"></span><figcaption>수정전에는 0x3412, 수정 후 0x1234로 바뀐모습</figcaption>
+</figure>
+<p></p>
+<p>write 0x1234(); 함수를 수정하였다.</p>
+<p>uint16_t my_nthos(uint16_t n) 함수를 추가해 3412가 1234가 되도록 해주었다.</p>
+<p>&nbsp;</p>
+<p>n1 : 비트연산을 통해 34만 남기고 뒤에 12날림 -&gt; 쉬프트 연산으로 0034가 되도록함</p>
+<p>n2 : 비트연산을 통해 12만 남기고 앞에 34 날림 -&gt; 쉬프트 연산으로 1200이 되도록함</p>
+<p>return :&nbsp; n1 + n2를 해줌</p>
+<p>-&gt; 원하던 1234로 변환.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p></div><p class="source-note">원문: <a href="https://ms-egg.tistory.com/2" target="_blank" rel="noopener noreferrer">Tistory ↗</a></p><a class="back" href="../../archive/">← 기록으로</a></article><footer><span>© 2026 Raw_Egg</span><a href="https://github.com/BackedEgg" target="_blank" rel="noopener noreferrer">GitHub ↗</a></footer></main></body></html>

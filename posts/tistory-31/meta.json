@@ -1,0 +1,13 @@
+{
+  "title": "Web - Search Filter",
+  "date": "2026-11-10",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명 : 자료실에서 파일 이름의 일부만 입력해도 관련 파일 목록을 찾아주는 검색기능이다. 목표: 검색 조건을 무력화해 감춰진 파일까지 전부 얻어라 파일이름을 검색하면 큰따옴표까지 보인다. 그래서…",
+  "previewTitle": "Web - Search Filter",
+  "previewExcerpt": "문제설명 : 자료실에서 파일 이름의 일부만 입력해도 관련 파일 목록을 찾아주는 검색기능이다. 목표: 검색 조건을 무력화해 감춰진 파일까지 전부 얻어라 파일이름을 검색하면 큰따옴표까지 보인다. 그래서…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/31",
+  "sourceCategory": "STUDY/Write up"
+}

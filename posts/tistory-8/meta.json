@@ -1,0 +1,13 @@
+{
+  "title": "LTE터널링을 위한 여정(2)",
+  "date": "2026-10-07",
+  "category": "blog-docs",
+  "excerpt": "이더넷 헤더에 대해 알아보고 직접 FCS를 계산하는 코드를 작성해볼것이다. 출처 : 위키피디아 이더넷 헤더다. non part of the frame 이라고 적혀져있는것은 말 그대로 우리 알빠 아니…",
+  "previewTitle": "LTE터널링을 위한 여정(2)",
+  "previewExcerpt": "이더넷 헤더에 대해 알아보고 직접 FCS를 계산하는 코드를 작성해볼것이다. 출처 : 위키피디아 이더넷 헤더다. non part of the frame 이라고 적혀져있는것은 말 그대로 우리 알빠 아니…",
+  "tags": [
+    "네트워크"
+  ],
+  "source": "https://ms-egg.tistory.com/8",
+  "sourceCategory": "STUDY/네트워크"
+}

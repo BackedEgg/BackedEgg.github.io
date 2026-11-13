@@ -1,0 +1,71 @@
+<h3>Request&nbsp;Anatomy</h3>
+<p>문제요약:평범해 보이는 사내 공지페이지이다. 딱히 별 다른 기능은 없다. <br><br>Write&nbsp;up: <br>맨&nbsp;처음&nbsp;페이지에&nbsp;들어가고&nbsp;내가&nbsp;할&nbsp;수&nbsp;있는&nbsp;행동들을&nbsp;생각했다.&nbsp;우선&nbsp;사용자&nbsp;화면에서&nbsp;할만한&nbsp;상호작용이&nbsp;딱히&nbsp;없었다. <br>그래서&nbsp;관리자페이지를&nbsp;활용하거나&nbsp;wireshark를&nbsp;이용해봐야겠다고&nbsp;생각했다. <br><br>우선&nbsp;어떤식으로&nbsp;통신을&nbsp;하는지&nbsp;지켜보기&nbsp;위해&nbsp;wireshark로&nbsp;패킷을&nbsp;잡아보았다.&nbsp; <br>정상적인&nbsp;handshake이후에&nbsp;서버에게&nbsp;get을&nbsp;보내고&nbsp;서버가&nbsp; <br>서버가&nbsp;ok를&nbsp;보내왔는데&nbsp;이때,&nbsp;x-ctf-flag를&nbsp;볼&nbsp;수&nbsp;있었다. <br><br>꼭&nbsp;wireshark가&nbsp;아니더라도&nbsp;관리자모드에서&nbsp;확인할&nbsp;수&nbsp;있었는데&nbsp; <br>network&nbsp;페이지의&nbsp;response&nbsp;headers에서&nbsp;찾아볼&nbsp;수&nbsp;있었다. <br><br>웹해킹을&nbsp;처음배우는거라&nbsp;무슨질문을&nbsp;해야할지조차&nbsp;몰라서&nbsp;막막했는데&nbsp;막상&nbsp;찾고&nbsp;보니&nbsp;쉬웠다. <br><br>wireshark를&nbsp;사용하면서&nbsp;패킷을&nbsp;분석하는&nbsp;능력도&nbsp;조금&nbsp;기른것&nbsp;같다.&nbsp;누가&nbsp;보낸건지,&nbsp;누구에게&nbsp;보내는&nbsp;건지&nbsp;보면서 <br>핸드쉐이크&nbsp;하는&nbsp;과정을&nbsp;직접&nbsp;보고&nbsp;사이트내의&nbsp;통신도&nbsp;지켜보니&nbsp;조금&nbsp;신기했다. <br>관리자모드도&nbsp;처음&nbsp;보았는데&nbsp;다양한&nbsp;기능들이&nbsp;있어서&nbsp;앞으로&nbsp;활용할&nbsp;수&nbsp;있을것&nbsp;같았다. <br><br></p>
+<h3>Method&nbsp;Gate</h3>
+<p>문제요약 : 관리반 인프라의 가동상태를 보여주는 보드가 있고 서비스 이름으로 개별조회를 할 수 있다. <br><br>Write&nbsp;up: <br>맨처음&nbsp;페이지를&nbsp;탐색했다.&nbsp;센서를&nbsp;개별조회&nbsp;해볼&nbsp;수&nbsp;있다는것,&nbsp;&nbsp;그렇지만&nbsp;web,db는&nbsp;식별자를&nbsp;물려받기만&nbsp;해서&nbsp;온실센서를&nbsp;가리키기만&nbsp;한다는것,&nbsp;응답형식이&nbsp;&nbsp;json&nbsp;이라는것,&nbsp;점검&nbsp;관련&nbsp;항목은&nbsp;화면조회에서&nbsp;내려주지않도록&nbsp;했다는것을&nbsp;알&nbsp;수&nbsp;있었다.&nbsp;그렇지만&nbsp;개별조회로&nbsp;web,과&nbsp;db,&nbsp;cache,&nbsp;mail을&nbsp;검색해봤다.&nbsp; <br>{"service":&nbsp;"이름",&nbsp;"status":"ok"}의&nbsp;형태로&nbsp;페이지가&nbsp;나왔다.&nbsp;} <br>wireshark로도&nbsp;패킷을&nbsp;잡아봤지만&nbsp;딱히&nbsp;얻을&nbsp;수&nbsp;있는&nbsp;정보는&nbsp;없었다. <br><br>관리자페이지를&nbsp;열었다. <br>개별조회는&nbsp;get형식인것을&nbsp;알&nbsp;수&nbsp;있다. <br>cmd를 열어&nbsp;</p>
+<pre><code>curl -X OPTIONS -i http://127.0.0.1:8109/status?service=web</code></pre>
+<p>를&nbsp;쳐보았다.&nbsp;allow&nbsp;에&nbsp;이&nbsp;페이지가&nbsp;허용하는&nbsp;메소드를&nbsp;알아보았는데&nbsp;post,&nbsp;get,&nbsp;options,&nbsp;head가&nbsp;있었다.&nbsp; <br>하지만&nbsp;꼭&nbsp;cmd가&nbsp;아니어도&nbsp;된다.&nbsp;console을&nbsp;이용하는&nbsp;방법은&nbsp;다음과&nbsp;같았다.&nbsp; </p>
+<pre><code>fetch(window.location.href, { method: 'OPTIONS' })
+  .then(response =&gt; {
+    console.log(response.headers.get('Allow')) ;
+    
+  })
+post의 형식으로도 보내면 어떻게 될지 궁금했다.
+constole에 fetch 를 사용했다.</code></pre>
+<p><br><br>**fetch:&nbsp;자바스크립트에서&nbsp;서버와&nbsp;http통신을&nbsp;할&nbsp;수&nbsp;있도록&nbsp;브라우저가&nbsp;기본적으로&nbsp;제공하는&nbsp;내장함수이다. <br><br>서버에서&nbsp;데이터를&nbsp;가져올때(&nbsp;GET) </p>
+<pre><code>fetch('url') # 서버에 (request)를 보내는 명령어, 기본적으로 GET요청이 날라감.
+.then(response =&gt;{ #fetch 요청이 성공적으로 끝난 다음에 실행할 할 일 지정.
+ return response.json(); #서버에서의 응답(response)를 자바스크립트에서 다룰 수 있는  JSON 형태로 변환.
+})
+.then(data=&gt; {
+console.log(data); #콘솔창에 출력.
+})</code></pre>
+<p><br>서버에&nbsp;데이터를&nbsp;보낼&nbsp;때(POST) </p>
+<pre><code>fetch('https://example.com', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ #http 통신은 문자열만 전송할 수 있음, 해당 명령어는 json문자열로 변환하여 전달하는것을 의미
+    name: '홍길동',
+    age: 25
+  })
+})
+.then(response =&gt; response.json())
+.then(data =&gt; console.log('성공:', data))
+.catch(error =&gt; console.error('에러:', error));</code></pre>
+<p><br><br>실제&nbsp;사용한&nbsp;코드 <br><br></p>
+<pre><code>fetch('http://127.0.0.1:8109/status?service=web', {
+  method: 'POST'
+  
+})
+.then(res =&gt; res.text())
+.then(data =&gt; console.log(data));</code></pre>
+<p><br><br></p>
+<h3>JSON&nbsp;Only</h3>
+<p>문제요약 : <br>이용자&nbsp;모임&nbsp;서비스의견을&nbsp;접수하는&nbsp;창구&nbsp;페이지이다.&nbsp;화면에&nbsp;나와있는&nbsp;폼으로&nbsp;보내면&nbsp;오류가&nbsp;난다. <br><br>페이지에는&nbsp;알려진&nbsp;문제&nbsp;라는&nbsp;글이&nbsp;있었는데&nbsp;이&nbsp;폼으로&nbsp;보내면&nbsp;항상&nbsp;content-type&nbsp;must&nbsp;be&nbsp;applicationi/json&nbsp;오류가&nbsp;난다고&nbsp;한다.&nbsp;접수&nbsp;api를&nbsp;json&nbsp;전용으로&nbsp;바꾸면서&nbsp;화면&nbsp;폼을&nbsp;같이&nbsp;고치지&nbsp;못했다고도&nbsp;한다. <br><br>그&nbsp;밑의&nbsp;접수&nbsp;api규격에는&nbsp; <br>엔드포인트&nbsp;post/feedback,&nbsp;본문형식&nbsp;json,&nbsp;필수&nbsp;필드&nbsp;message,&nbsp;응답&nbsp;:&nbsp;접수된&nbsp;내용을&nbsp;그대로&nbsp;되돌려줍니다 <br>가&nbsp;적혀있었다. <br><br>Write&nbsp;up&nbsp;:&nbsp; <br>개발자도구를&nbsp;열어보니&nbsp;페이지의&nbsp;말대로&nbsp;feedback&nbsp;페이지는&nbsp;post를&nbsp;보내고&nbsp;있었고&nbsp;다만&nbsp;400&nbsp;bad&nbsp;request&nbsp;를&nbsp;보내고&nbsp;있었다. <br>정상적인&nbsp;post를&nbsp;보낼&nbsp;수&nbsp;있도록하는&nbsp;명령어를&nbsp;console에&nbsp;넣어봐야할것&nbsp;같다.&nbsp; <br><br>실제&nbsp;넣은&nbsp;명령어&nbsp;: <br><br></p>
+<pre><code>fetch('http://127.0.0.1:8111/feedback', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    message: '홍길동',
+    
+  })
+})
+.then(res =&gt; res.text())
+.then(data =&gt; console.log(data));</code></pre>
+<p><br><br><br></p>
+<h3>Locker&nbsp;Share</h3>
+<p>문제요약 : <br>개인물품&nbsp;보관함을&nbsp;관리하는&nbsp;서비스페이지다.&nbsp;로그인을&nbsp;하면&nbsp;내&nbsp;락커에&nbsp;메모를&nbsp;남길&nbsp;수&nbsp;있고,&nbsp;'내&nbsp;메모&nbsp;내보내기'링크로&nbsp;그&nbsp;메모를&nbsp;파일로&nbsp;내려받을&nbsp;수&nbsp;있다. <br>내&nbsp;계정으로&nbsp;로그인한&nbsp;채&nbsp;다른&nbsp;사람의&nbsp;락커&nbsp;메모를&nbsp;열람하면&nbsp;된다. <br><br>페이지에&nbsp;들어가서&nbsp;락커실&nbsp;배치도를&nbsp;보면&nbsp;내가&nbsp;쓰고&nbsp;있는칸은&nbsp;2번이고,&nbsp;1번이&nbsp;admin인것을&nbsp;볼&nbsp;수&nbsp;있었다. <br>또한&nbsp;락커배정(로그인)을&nbsp;하는데&nbsp;따로&nbsp;비밀번호&nbsp;인증&nbsp;등의&nbsp;권한&nbsp;인증&nbsp;절차가&nbsp;따로&nbsp;없었다.&nbsp; <br>여기서&nbsp;나는&nbsp;url을&nbsp;봤는데&nbsp;api/notes/2/export라고&nbsp;되어있었다. <br>숫자를&nbsp;2에서&nbsp;1로&nbsp;바꾸니&nbsp;풀렸다. <br><br>다만&nbsp;이렇게&nbsp;푸는건&nbsp;아닌것&nbsp;같아서&nbsp;조금&nbsp;더&nbsp;생각해보았다. <br><br>우선&nbsp;페이지에서&nbsp;사용중인&nbsp;json&nbsp;형식이&nbsp;body,&nbsp;id,&nbsp;owner,&nbsp;title&nbsp;이었기때문에 <br>이것들을&nbsp;가지고&nbsp;post&nbsp;fetch&nbsp;를&nbsp;&nbsp;작성해야겠다고&nbsp;생각했다. <br>post가&nbsp;되지&nbsp;않았다.&nbsp;그래서&nbsp;사용가능한&nbsp;옵션에는&nbsp;뭐가&nbsp;있는지&nbsp;보았더니 </p>
+<pre><code>fetch(window.location.href, { method: 'OPTIONS' })
+  .then(response =&gt; {
+    console.log(response.headers.get('Allow')) ;
+    
+  })</code></pre>
+<p><br><br>GET,&nbsp;Header가&nbsp;끝이었다. <br>그래서&nbsp;GET으로&nbsp;fetch&nbsp;를&nbsp;보내야겠다고&nbsp;생각했다.&nbsp;다만,&nbsp;내보내기&nbsp;주소는&nbsp;&nbsp;/api/notes/번호/export&nbsp;형식을&nbsp;따랐다. </p>
+<pre><code>fetch('http://127.0.0.1:8104/api/notes/1/export')
+.then(response =&gt; response.text())
+.then(data =&gt; console.log(data)</code></pre>
+<p><br>를 보냈더니 답이 나왔다.</p>
+<p>막상 코드를 쓰고 나니 첫번째 방법이랑 살짝은 다르지만 결국 똑같은 경로 인거 같다.</p>

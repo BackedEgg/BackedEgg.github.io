@@ -1,0 +1,13 @@
+{
+  "title": "Web - Guest Book",
+  "date": "2026-11-11",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명 : 기획 모임 방명록 서비스의 로그인 폼입니다. 아이디와 비밀번호를 입력하면 서버가 회원 목록에서 일치하는 계정을 찾아 로그인시켜 줍니다. 목표: 비밀번호를 모르는 채로 admin 으로 로…",
+  "previewTitle": "Web - Guest Book",
+  "previewExcerpt": "문제설명 : 기획 모임 방명록 서비스의 로그인 폼입니다. 아이디와 비밀번호를 입력하면 서버가 회원 목록에서 일치하는 계정을 찾아 로그인시켜 줍니다. 목표: 비밀번호를 모르는 채로 admin 으로 로…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/33",
+  "sourceCategory": "STUDY/Write up"
+}

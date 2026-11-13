@@ -1,0 +1,13 @@
+{
+  "title": "Web - None algorithm",
+  "date": "2026-10-10",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명: 아이디만 입력하면 로그인되는 모임 회원포탈이다. 발급된 토큰으로 정보를 조회하거나, 관리자라면 관리자 전용 대시보드에 접근할 수 있다. 목표: 서명이 없는 토큰으로 관리자 api를 통과하…",
+  "previewTitle": "Web - None algorithm",
+  "previewExcerpt": "문제설명: 아이디만 입력하면 로그인되는 모임 회원포탈이다. 발급된 토큰으로 정보를 조회하거나, 관리자라면 관리자 전용 대시보드에 접근할 수 있다. 목표: 서명이 없는 토큰으로 관리자 api를 통과하…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/11",
+  "sourceCategory": "STUDY/Write up"
+}

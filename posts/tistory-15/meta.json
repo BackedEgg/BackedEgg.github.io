@@ -1,0 +1,13 @@
+{
+  "title": "Web - Token confusion",
+  "date": "2026-10-10",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명: 발급되는 샘플 토큰의 구조를 그대로 화면에 보여주는 포털이다. 목표: 서명을 스스로 만든 토큰으로 관리자 API를 통과하라 페이지에 들어가면 발급권한이 guest인 토큰이 보인다. 그대로…",
+  "previewTitle": "Web - Token confusion",
+  "previewExcerpt": "문제설명: 발급되는 샘플 토큰의 구조를 그대로 화면에 보여주는 포털이다. 목표: 서명을 스스로 만든 토큰으로 관리자 API를 통과하라 페이지에 들어가면 발급권한이 guest인 토큰이 보인다. 그대로…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/15",
+  "sourceCategory": "STUDY/Write up"
+}

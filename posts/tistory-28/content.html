@@ -1,0 +1,83 @@
+<p><span>니케 PC 런처 사고는 어떻게 일어난 일일까?</span></p>
+<p>&nbsp;</p>
+<p><span>찾아보면서 너무 어려웠지만 AI의 도움을 받아 가까스로 이해했다. </span></p>
+<p><span>우선 </span><a href="https://gist.github.com/MotherSphere/d6c049a09ba8ac3085c51ee9df24a4e5"><span>MotherSphere의 기술 분석 보고서</span></a><span>를 읽고 나니, 이 사고에는 역할이 다른 </span><span>세 단계의 코드</span><span>가 있었다.</span></p>
+<pre><code>① 공식 CDN 파일에 추가된 코드
+         ↓ 다른 스크립트를 불러옴
+② insightjs.com에서 제공된 l.js
+         ↓ 런처의 기능을 호출함
+③ PC에 다운로드된 악성 페이로드
+         ↓ 파일 접근·정보 수집·명령 처리</code></pre>
+<p><span>이 세 가지를 한꺼번에 “악성 JavaScript”라고 부르면 실제 동작이 잘 보이지 않는다. 하나씩 정리해보자.</span></p>
+<h2><span>먼저, 런처와 CDN은 무엇인가?</span></h2>
+<p><b><span>런처</span></b><span>는 게임 본체를 실행하기 전에 켜지는 프로그램이다. 로그인, 공지 표시, 업데이트 확인, 파일 다운로드, 게임 실행 등을 담당한다.</span></p>
+<p><span>런처의 일부 화면은 웹페이지처럼 만들 수 있다. 이 경우 런처 안의 브라우저가 HTML과 JavaScript를 받아 화면을 표시한다. 즉, 이용자는 공식 런처 프로그램을 실행했더라도 그 안에서는 네트워크로 받은 JavaScript가 동작할 수 있다.</span></p>
+<p><span>**CDN(Content Delivery Network)**은 JavaScript나 이미지 같은 파일을 여러 서버를 통해 이용자에게 전달하는 체계다. 파일을 이용자와 가까운 곳에 캐시해 빠르게 보내는 것이 주요 목적이다. 여기서 </span><b><span>캐시</span></b><span>는 원본 파일의 복사본을 저장해 두는 것을 뜻한다. </span><a href="https://www.cloudflare.com/learning/cdn/what-is-a-cdn/"><span>CDN 개념 설명</span></a> (나는 <a href="https://docs.tosspayments.com/resources/glossary/cdn">토스</a>의 설명을 보고 이해했다.)</p>
+<p><span>이번 사고에서 런처가 파일을 요청한 공식 호스트 이름에는 </span><span>sg-gpts.playerinfinite.com</span><span>과 </span><span>na-webassets.playerinfinite.com</span><span>이 있었다. 이 이름들은 파일을 요청할 때 사용하는 </span><b><span>주소의 이름</span></b><span>이다. 같은 이름으로 요청해도 어느 CDN 서버에 연결됐는지에 따라 서로 다른 캐시 파일을 받을 수 있다.</span></p>
+<p><span>실제로 분석 보고서에서는 같은 파일에 대해 어떤 CDN 서버는 정상본을, 다른 서버는 변조본을 제공했던 시기가 확인됐다. </span><a href="https://gist.github.com/MotherSphere/d6c049a09ba8ac3085c51ee9df24a4e5"><span>CDN 서버별 파일 비교</span></a></p>
+<h2><span>1. 공식 CDN 파일에 추가된 코드는 무엇을 했을까?</span></h2>
+<p><span>런처가 사용하는 공식 CDN의 JavaScript 파일 네 개에 새로운 코드가 추가됐다.</span></p>
+<ul>
+<li><span>aegis-fix.min.js</span></li>
+<li><span>images.7fec4c32.js</span></li>
+<li><span>FeedList.feb647c9.js</span></li>
+<li><span>vue-bucket.min.js</span></li>
+</ul>
+<p><span>추가된 코드의 첫 역할은 </span><b><span>insightjs.com</span></b><b><span>의 </span></b><b><span>l.js</span></b><b><span>를 불러오는 것</span></b><span>이었다. 예를 들어 </span><span>aegis-fix.min.js</span><span>에는 다음 주소를 불러오는 코드가 들어갔다.</span></p>
+<pre><code>https://insightjs.com/l.js?f=aegis</code></pre>
+<p><span>다른 세 파일도 같은 </span><span>/l.js</span><span>를 요청했지만, 주소 끝의 값은 각각 </span><span>images</span><span>, </span><span>feedlist</span><span>, </span><span>vue</span><span>였다. </span><span>?f=aegis</span><span> 같은 부분은 서버에 함께 전달되는 추가 값이다. 이것이 정확히 어떤 용도로 사용됐는지는 확인되지 않았다. </span><a href="https://gist.github.com/MotherSphere/d6c049a09ba8ac3085c51ee9df24a4e5"><span>변조 파일 목록</span></a></p>
+<p><span>여기서 </span><span>insightjs.com</span><span>은 공식 CDN 호스트 이름과 </span><b><span>별개의 도메인</span></b><span>이다. </span><span>/l.js</span><span>는 그 도메인에 연결된 서버에 요청한 파일 경로다.</span></p>
+<pre><code>공식 CDN에서 받은 파일
+    ↓ 추가된 코드 실행
+insightjs.com에 /l.js 요청
+    ↓
+응답으로 받은 JavaScript 실행</code></pre>
+<p><span>따라서 </span><b><span>공식 CDN 파일에 </span></b><b><span>l.js</span></b><b><span> 전체가 들어 있었던 것은 아니다.</span></b><span> 공식 파일에는 </span><span>l.js</span><span>를 </span><span>추가로 불러오는 코드</span><span>가 들어 있었다.</span></p>
+<h2><span>2. 그럼 </span><span>l.js</span><span>는 무엇일까?</span></h2>
+<p><span>l.js</span><span>는 런처 안의 브라우저가 </span><span>insightjs.com</span><span>에 요청해 실행한 </span><b><span>JavaScript</span></b><span>다.</span></p>
+<p><span>여기서 나는 궁금한점이 생겼다.</span></p>
+<p><b><span>JavaScript 파일 실행으로 PC에 악성 프로그램을 설치할 수 있을까?</span></b></p>
+<p><span>일반 웹페이지의 JavaScript라면 운영체제의 파일을 마음대로 다운로드해 실행할 수 있다고 생각하면 안 된다. 그런데 이번에는 JavaScript가 </span><b><span>일반 웹브라우저가 아니라 게임 런처 안에서 실행</span></b><span>됐다. 런처는 화면의 JavaScript가 런처 프로그램의 기능을 호출할 수 있도록 **JS 브리지(JavaScript bridge)**를 제공하고 있었다.</span></p>
+<p><span>JS 브리지는 말 그대로 두 영역을 연결하는 통로다.</span></p>
+<pre><code>런처 안의 웹 화면에 있는 JavaScript
+           ↓ JS 브리지
+파일 다운로드 같은 런처 프로그램의 기능</code></pre>
+<p><span>분석 보고서에 따르면 </span><span>l.js</span><span>는 이 통로를 통해 런처의 </span><b><span>Srv_DownloadFile</span></b><span> 기능을 호출했다. 그 결과 </span><span>analytics.insightjs.com</span><span>에서 </span><span>insight.bundle</span><span>이라는 악성 페이로드를 내려받는 단계로 이어졌다. </span><span>Srv_DownloadFile</span><span>은 모든 일반 웹페이지에 기본으로 제공되는 JavaScript 명령이 아니라, </span><b><span>이 런처가 제공한 기능</span></b><span>이다. </span><a href="https://gist.github.com/MotherSphere/d6c049a09ba8ac3085c51ee9df24a4e5"><span>페이로드 다운로드 분석</span></a></p>
+<p><span>여기서 두 주소를 구분할 필요가 있다.</span></p>
+<ul>
+<li><span>insightjs.com/l.js</span><span>: 런처 안에서 실행된 </span><b><span>JavaScript를 요청한 주소</span></b></li>
+<li><span>analytics.insightjs.com/.../insight.bundle</span><span>: 그다음 단계의 </span><b><span>악성 페이로드를 요청한 주소</span></b></li>
+</ul>
+<p><span>analytics.insightjs.com</span><span>은 </span><span>insightjs.com</span><span>의 </span><b><span>하위 호스트 이름</span></b><span>이다.&nbsp;</span></p>
+<h3><span>l.js</span><span>는 다운로드만 담당했을까?</span></h3>
+<p><span>그것만은 아니다. 보고서에 따르면 다운로드된 페이로드 자체에는 별도의 네트워크 통신 코드가 확인되지 않았다. 페이로드는 런처 내부의 </span><span>k2f_chan</span><span>이라는 통로를 통해 요청에 응답했고, </span><b><span>공격자 측 서버와의 주기적인 접속 및 데이터 업로드는 런처의 내장 브라우저에서 실행되는 </span></b><b><span>l.js</span></b><b><span>가 담당</span></b><span>했다. </span><a href="https://gist.github.com/MotherSphere/d6c049a09ba8ac3085c51ee9df24a4e5"><span>페이로드와 </span></a><a href="https://gist.github.com/MotherSphere/d6c049a09ba8ac3085c51ee9df24a4e5"><span>l.js</span></a><a href="https://gist.github.com/MotherSphere/d6c049a09ba8ac3085c51ee9df24a4e5"><span>의 통신 구조</span></a></p>
+<p><span>이를 나눠 보면 다음과 같다.</span></p>
+<pre><code>공격자 측 서버
+      ↕ 네트워크 통신
+런처 안의 l.js
+      ↕ 런처 내부 통로
+PC에서 실행된 악성 페이로드
+      ↕
+PC의 파일·브라우저 정보·운영체제 기능</code></pre>
+<p><span>즉, </span><span>l.js</span><span>는 단순히 파일 하나를 내려받고 끝나는 역할로 설명하기 어렵다. </span><b><span>외부 서버와 PC 안의 페이로드를 이어 주는 역할</span></b><span>도 했다.</span></p>
+<p><span>이 구조 때문에 네트워크 기록을 볼 때 악성 페이로드 파일이 직접 인터넷에 접속한 흔적만 찾으면 놓칠 수 있다. 보고서에서는 관련 통신이 런처의 내장 브라우저 프로세스인 </span><span>tbs_browser.exe</span><span> 쪽에 나타난다고 설명한다.</span></p>
+<h3><span>l.js</span><span>에 대해 어디까지 확인됐나?</span></h3>
+<p><span>여기서 주의해야 한다. 사고 당시 악성 동작을 하던 </span><b><span>l.js</span></b><b><span>의 전체 원본은 확보되지 않았다.</span></b><span> 분석 보고서는 변조된 CDN 파일, 런처의 로그와 캐시, 내려받은 페이로드를 통해 </span><span>l.js</span><span>의 역할을 추적했다.</span></p>
+<p><span>예를 들어 런처 로그에 남은 </span><span>k2f_chan registered</span><span>, </span><span>adopted</span><span> 같은 문구는 다음 단계가 실제로 진행됐는지 판단하는 근거가 된다. 하지만 캐시에 남은 </span><span>l.js</span><span>의 주소 기록에는 스크립트 본문이 저장돼 있지 않아, 그 기록만으로 당시의 </span><span>l.js</span><span> 전체 코드를 복원할 수는 없었다. </span><a href="https://gist.github.com/MotherSphere/d6c049a09ba8ac3085c51ee9df24a4e5"><span>로그·캐시 분석</span></a></p>
+<p>&nbsp;</p>
+<h2><span>3. 내려받은 페이로드는 무엇을 했나?</span></h2>
+<p><span>런처가 다운로드한 </span><span>insight.bundle</span><span>은 이름만 보면 일반 데이터 파일처럼 보일 수 있다. 하지만 확보된 파일은 분석 결과 </span><b><span>LuaJIT 바이트코드로 된 원격 제어 에이전트</span></b><span>였다. </span><span>l.js</span><span>와 같은 JavaScript 파일이 아니라, PC 안에서 실행되는 다음 단계 코드다. </span><a href="https://gist.github.com/MotherSphere/d6c049a09ba8ac3085c51ee9df24a4e5"><span>페이로드 정적 분석</span></a></p>
+<p><span>보고서에서 확인한 기능에는 명령 실행, 파일 읽기, 화면 캡처, 브라우저에 저장된 정보와 개발 도구의 비밀값을 찾는 기능 등이 있었다. 일부 실행 사례에서는 추가 DLL을 설치해 런처가 닫힌 뒤에도 다른 프로그램에서 불러올 수 있게 하는 동작도 확인됐다.</span></p>
+<h2><span>insightjs.com</span><span>은 어떻게 등장했을까?</span></h2>
+<p><span>운영사 공지는 </span><span>insightjs.com</span><span>을 과거 일부 게임 서비스에서 사용된 도메인이라고 설명한다. 공개 도메인 기록에서는 이 도메인의 사용 기간이 끝난 뒤 제3자가 다시 등록한 사실이 확인됐다. </span><a href="https://gist.github.com/MotherSphere/d6c049a09ba8ac3085c51ee9df24a4e5"><span>운영사 공지와 도메인 기록 비교</span></a></p>
+<p><span>.</span></p>
+<h2><span>정리</span></h2>
+<p><span>이번 사고를 내가 이해한 대로 순서대로 적으면 다음과 같다.</span></p>
+<ol>
+<li><span>니케 PC 런처가 받아 쓰던 공식 CDN의 JavaScript 파일 네 개에 코드가 추가됐다.</span></li>
+<li><span>추가된 코드는 별도 도메인인 </span><span>insightjs.com</span><span>의 </span><span>l.js</span><span>를 불러왔다.</span></li>
+<li><span>l.js</span><span>는 런처의 </span><b><span>JS 브리지</span></b><span>를 통해 다운로드 기능을 사용하는 단계에 관여했다.</span></li>
+<li><span>일부 실행 사례에서 </span><span>insight.bundle</span><span>이라는 악성 페이로드가 다운로드돼 PC에서 실행됐다.</span></li>
+<li><span>이후 </span><span>l.js</span><span>는 외부 서버와 PC 안의 페이로드 사이의 통신에도 관여한 것으로 분석됐다.</span></li>
+</ol>
+<p>너무 어렵다... AI가 없었더라면 이해하는데 일주일은 넘게 걸렸을것같다..</p>

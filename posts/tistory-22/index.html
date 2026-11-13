@@ -1,0 +1,744 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Raw_Egg의 개발·보안 학습 기록"><meta name="theme-color" content="#fff9ed"><title>LTE터널링을 위한 여정(3) Scapy · Raw_Egg</title><link rel="stylesheet" href="../../style.css"><link rel="stylesheet" href="../../egg-extra.css"><script src="../../app.js" defer></script></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><aside class="rail"><a class="logo" href="../../" aria-label="Raw_Egg 홈"><span class="logo-shape"><i></i></span><span>Raw_Egg<span class="period">.</span></span></a><nav class="rail-nav" aria-label="주 메뉴"><a  href="../../">Home</a><a aria-current="page" href="../../archive/">Records</a><a  href="../../categories/">Categories</a><a  href="../../about/">About</a></nav><div class="rail-bottom"><span>make me baked<span class="period">.</span></span><button class="theme" type="button" aria-label="색상 모드 전환">◐ <span>Dark</span></button></div></aside><header class="mobile-head"><a href="../../">🥚 Raw_Egg.</a><button class="menu" type="button" aria-expanded="false" aria-label="메뉴 열기">☰</button></header><main id="main" class="main"><article class="article"><a class="back" href="../../archive/">← 기록으로</a><header class="article-head"><span class="kicker">2026-10-15 · RECORD</span><h1>LTE터널링을 위한 여정(3) Scapy</h1><p>앞으로 네트워크 패킷을 분석하고 헤더를 떼고 붙이고 변조하고 등의 작업을 위하여 scapy 라는 파이썬 라이브러리 사용이 필수적이라는것을 알게 되었다. 그래서 오늘은 Scapy 에 대해 알아보는 시…</p></header><div class="article-body"><p>앞으로 네트워크 패킷을 분석하고 헤더를 떼고 붙이고 변조하고 등의 작업을 위하여 scapy 라는 파이썬 라이브러리 사용이 필수적이라는것을 알게 되었다.</p>
+<p>그래서 오늘은 Scapy 에 대해 알아보는 시간을 가져보려 한다.</p>
+<p>&nbsp;</p>
+<h3>Scapy:</h3>
+<p><b><span>"Scapy는 파이썬(Python) 기반의 강력한 인터랙티브 패킷 조작 라이브러리이자 프로그램입니다.</span> 네트워크 패킷을 직접 위조(Forge)하거나 디코딩하고, 네트워크 선로에 전송하며, 캡처 및 요청-응답 매칭 등 다양한 네트워크 분석 작업을 수행할 수 있습니다.</b> (<a href="https://scapy.net/">https://scapy.net/</a>)<b>"</b></p>
+<p>&nbsp;</p>
+<p>라고 한다.</p>
+<p>&nbsp;</p>
+<p>그럼 <b>어떤 객체들</b>이 있을까?</p>
+<p>모든것을 다 소개할 수는 없지만 최대한 정리해보았다.</p>
+<p>&nbsp;</p>
+<h2>1.&nbsp; 패킷 생성</h2>
+<div>
+<table>
+<tbody>
+<tr>
+<td><span>Ether()</span></td>
+<td><span>Ethernet 헤더 생성</span></td>
+<td><span>Ether(dst="ff:ff:ff:ff:ff:ff")</span></td>
+</tr>
+<tr>
+<td><span>ARP()</span></td>
+<td><span>ARP 패킷 생성</span></td>
+<td><span>ARP(pdst="192.0.2.1")</span></td>
+</tr>
+<tr>
+<td><span>IP()</span></td>
+<td><span>IPv4 헤더 생성</span></td>
+<td><span>IP(dst="192.0.2.1")</span></td>
+</tr>
+<tr>
+<td><span>IPv6()</span></td>
+<td><span>IPv6 헤더 생성</span></td>
+<td><span>IPv6(dst="::1")</span></td>
+</tr>
+<tr>
+<td><span>TCP()</span></td>
+<td><span>TCP 헤더 생성</span></td>
+<td><span>TCP(dport=80, flags="S")</span></td>
+</tr>
+<tr>
+<td><span>UDP()</span></td>
+<td><span>UDP 헤더 생성</span></td>
+<td><span>UDP(dport=53)</span></td>
+</tr>
+<tr>
+<td><span>ICMP()</span></td>
+<td><span>ICMPv4 패킷 생성</span></td>
+<td><span>ICMP(type=8)</span></td>
+</tr>
+<tr>
+<td><span>ICMPv6EchoRequest()</span></td>
+<td><span>ICMPv6 Echo Request</span></td>
+<td><span>ICMPv6EchoRequest()</span></td>
+</tr>
+<tr>
+<td><span>Raw()</span></td>
+<td><span>임의의 바이트 데이터</span></td>
+<td><span>Raw(load=b"hello")</span></td>
+</tr>
+<tr>
+<td><span>DNS()</span></td>
+<td><span>DNS 메시지 생성</span></td>
+<td><span>DNS(rd=1)</span></td>
+</tr>
+<tr>
+<td><span>DNSQR()</span></td>
+<td><span>DNS 질문 레코드 생성</span></td>
+<td><span>DNSQR(qname="example.com")</span></td>
+</tr>
+<tr>
+<td><span>DNSRR()</span></td>
+<td><span>DNS 리소스 레코드 생성</span></td>
+<td><span>DNSRR(rrname="example.com", type="A", rdata="192.0.2.1")</span></td>
+</tr>
+<tr>
+<td><span>Dot1Q()</span></td>
+<td><span>VLAN 태그 생성</span></td>
+<td><span>Dot1Q(vlan=10)</span></td>
+</tr>
+<tr>
+<td><span>GRE()</span></td>
+<td><span>GRE 캡슐화 헤더</span></td>
+<td><span>GRE()</span></td>
+</tr>
+<tr>
+<td><span>IPOption()</span></td>
+<td><span>IPv4 옵션 객체</span></td>
+<td><span>IPOption(b"\x01")</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>패킷을 네트워크로 실제 전송하지는 않고 메모리에서 구성하는 코드이다.</p>
+<h2>2. 패킷 구조 확인</h2>
+<div>
+<table>
+<tbody>
+<tr>
+<td><span>pkt.show()</span></td>
+<td><span>계층별 필드 상세 출력</span></td>
+<td><span>pkt.show()</span></td>
+</tr>
+<tr>
+<td><span>pkt.show2()</span></td>
+<td><span>직렬화한 패킷을 다시 해석해 출력</span></td>
+<td><span>pkt.show2()</span></td>
+</tr>
+<tr>
+<td><span>pkt.summary()</span></td>
+<td><span>패킷을 한 줄로 요약</span></td>
+<td><span>pkt.summary()</span></td>
+</tr>
+<tr>
+<td><span>pkt.sprintf()</span></td>
+<td><span>원하는 형식으로 필드 출력</span></td>
+<td><span>pkt.sprintf("%IP.src%")</span></td>
+</tr>
+<tr>
+<td><span>ls()</span></td>
+<td><span>사용 가능한 필드 목록 확인</span></td>
+<td><span>ls(TCP)</span></td>
+</tr>
+<tr>
+<td><span>hexdump()</span></td>
+<td><span>HEX 및 ASCII 출력</span></td>
+<td><span>hexdump(pkt)</span></td>
+</tr>
+<tr>
+<td><span>chexdump()</span></td>
+<td><span>C 배열 형태의 HEX 출력</span></td>
+<td><span>chexdump(pkt)</span></td>
+</tr>
+<tr>
+<td><span>linehexdump()</span></td>
+<td><span>한 줄 HEX 출력</span></td>
+<td><span>linehexdump(pkt)</span></td>
+</tr>
+<tr>
+<td><span>raw()</span></td>
+<td><span>패킷을 바이트로 변환</span></td>
+<td><span>raw(pkt)</span></td>
+</tr>
+<tr>
+<td><span>bytes()</span></td>
+<td><span>패킷 바이트 표현 생성</span></td>
+<td><span>bytes(pkt)</span></td>
+</tr>
+<tr>
+<td><span>len()</span></td>
+<td><span>패킷 바이트 길이 확인</span></td>
+<td><span>len(pkt)</span></td>
+</tr>
+<tr>
+<td><span>pkt.json()</span></td>
+<td><span>패킷 정보를 JSON 문자열로 표현</span></td>
+<td><span>pkt.json()</span></td>
+</tr>
+<tr>
+<td><span>pkt.command()</span></td>
+<td><span>재생성 가능한 Scapy 표현 생성</span></td>
+<td><span>pkt.command()</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>show2()는 패킷을 직렬화한 뒤 다시 해석하므로 길이와 체크섬처럼 자동 계산되는 필드를 확인할 때 특히 유용하다.</p>
+<h2>3. 패킷 계층 접근 및 분리</h2>
+<div>
+<table>
+<tbody>
+<tr>
+<td><span>pkt[IP]</span></td>
+<td><span>IPv4 계층 객체 접근</span></td>
+<td><span>pkt[IP].src</span></td>
+</tr>
+<tr>
+<td><span>pkt[TCP]</span></td>
+<td><span>TCP 계층 객체 접근</span></td>
+<td><span>pkt[TCP].dport</span></td>
+</tr>
+<tr>
+<td><span>pkt.getlayer()</span></td>
+<td><span>특정 계층 객체 반환</span></td>
+<td><span>pkt.getlayer(UDP)</span></td>
+</tr>
+<tr>
+<td><span>pkt.haslayer()</span></td>
+<td><span>특정 계층 존재 여부 확인</span></td>
+<td><span>pkt.haslayer(TCP)</span></td>
+</tr>
+<tr>
+<td><span>pkt.layers()</span></td>
+<td><span>패킷에 포함된 계층 클래스 목록</span></td>
+<td><span>pkt.layers()</span></td>
+</tr>
+<tr>
+<td><span>pkt.getlayer(Raw)</span></td>
+<td><span>Raw 계층 가져오기</span></td>
+<td><span>pkt.getlayer(Raw)</span></td>
+</tr>
+<tr>
+<td><span>pkt.copy()</span></td>
+<td><span>패킷 복사</span></td>
+<td><span>copy_pkt = pkt.copy()</span></td>
+</tr>
+<tr>
+<td><span>pkt.remove_payload()</span></td>
+<td><span>해당 계층 뒤의 페이로드 제거</span></td>
+<td><span>pkt.remove_payload()</span></td>
+</tr>
+<tr>
+<td><span>pkt.add_payload()</span></td>
+<td><span>페이로드 연결</span></td>
+<td><span>pkt.add_payload(Raw(b"test"))</span></td>
+</tr>
+<tr>
+<td><span>pkt.lastlayer()</span></td>
+<td><span>마지막 계층 반환</span></td>
+<td><span>pkt.lastlayer()</span></td>
+</tr>
+<tr>
+<td><span>pkt.getfieldval()</span></td>
+<td><span>지정한 계층의 필드 값 읽기</span></td>
+<td><span>pkt[IP].getfieldval("ttl")</span></td>
+</tr>
+<tr>
+<td><span>pkt.setfieldval()</span></td>
+<td><span>지정한 계층의 필드 값 설정</span></td>
+<td><span>pkt[IP].setfieldval("ttl", 32)</span></td>
+</tr>
+<tr>
+<td><span>pkt.decode_payload_as()</span></td>
+<td><span>페이로드를 지정한 계층으로 해석</span></td>
+<td><span>pkt.decode_payload_as(Raw)</span></td>
+</tr>
+<tr>
+<td><span>pkt.getlayer()</span></td>
+<td><span>원하는 계층이 없으면 None 반환</span></td>
+<td><span>pkt.getlayer(DNS)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<h2>&nbsp;</h2>
+<h2>4. 패킷 전송 및 송수신</h2>
+<div>
+<table>
+<tbody>
+<tr>
+<td><span>send()</span></td>
+<td><span>L3 패킷 전송</span></td>
+<td><span>send(IP(dst="127.0.0.1")/ICMP())</span></td>
+</tr>
+<tr>
+<td><span>sendp()</span></td>
+<td><span>L2 프레임 전송</span></td>
+<td><span>sendp(Ether()/IP(dst="127.0.0.1"))</span></td>
+</tr>
+<tr>
+<td><span>sr()</span></td>
+<td><span>L3 전송 후 응답 수집</span></td>
+<td><span>sr(IP(dst="127.0.0.1")/ICMP(), timeout=2)</span></td>
+</tr>
+<tr>
+<td><span>sr1()</span></td>
+<td><span>L3 전송 후 첫 응답 반환</span></td>
+<td><span>sr1(IP(dst="127.0.0.1")/ICMP(), timeout=2)</span></td>
+</tr>
+<tr>
+<td><span>srp()</span></td>
+<td><span>L2 전송 및 응답 수집</span></td>
+<td><span>srp(Ether()/ARP(pdst="192.0.2.1"), timeout=2)</span></td>
+</tr>
+<tr>
+<td><span>srp1()</span></td>
+<td><span>L2 전송 후 첫 응답 반환</span></td>
+<td><span>srp1(Ether()/ARP(pdst="192.0.2.1"), timeout=2)</span></td>
+</tr>
+<tr>
+<td><span>sendpfast()</span></td>
+<td><span>외부 재생 도구를 활용한 빠른 L2 전송</span></td>
+<td><span>sendpfast([Ether()/IP()])</span></td>
+</tr>
+<tr>
+<td><span>srloop()</span></td>
+<td><span>L3 패킷을 반복 송수신</span></td>
+<td><span>srloop(IP(dst="127.0.0.1")/ICMP(), count=3)</span></td>
+</tr>
+<tr>
+<td><span>srploop()</span></td>
+<td><span>L2 패킷을 반복 송수신</span></td>
+<td><span>srploop(Ether()/ARP(pdst="192.0.2.1"), count=3)</span></td>
+</tr>
+</tbody>
+</table>
+<span></span><span></span></div>
+<div>&nbsp;</div>
+<p>&nbsp;</p>
+<h2>5. 패킷 캡처</h2>
+<div>
+<table>
+<tbody>
+<tr>
+<td><span>sniff()</span></td>
+<td><span>패킷 캡처</span></td>
+<td><span>sniff(count=5)</span></td>
+</tr>
+<tr>
+<td><span>AsyncSniffer()</span></td>
+<td><span>백그라운드 캡처 객체</span></td>
+<td><span>AsyncSniffer(iface="lo")</span></td>
+</tr>
+<tr>
+<td><span>sniff(filter=...)</span></td>
+<td><span>BPF 조건으로 패킷 캡처</span></td>
+<td><span>sniff(filter="icmp", count=5)</span></td>
+</tr>
+<tr>
+<td><span>sniff(prn=...)</span></td>
+<td><span>캡처한 패킷에 함수 적용</span></td>
+<td><span>sniff(prn=lambda p: p.summary(), count=5)</span></td>
+</tr>
+<tr>
+<td><span>sniff(lfilter=...)</span></td>
+<td><span>Python 조건으로 필터링</span></td>
+<td><span>sniff(lfilter=lambda p: IP in p, count=5)</span></td>
+</tr>
+<tr>
+<td><span>sniff(offline=...)</span></td>
+<td><span>PCAP 파일에서 패킷 읽기</span></td>
+<td><span>sniff(offline="test.pcap")</span></td>
+</tr>
+<tr>
+<td><span>sniff(store=False)</span></td>
+<td><span>패킷을 메모리에 누적하지 않음</span></td>
+<td><span>sniff(count=10, store=False)</span></td>
+</tr>
+<tr>
+<td><span>sniff(timeout=...)</span></td>
+<td><span>지정 시간 동안 캡처</span></td>
+<td><span>sniff(timeout=5)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>&nbsp;</p>
+<h2>6. 패킷 필드 수정</h2>
+<div>
+<table>
+<tbody>
+<tr>
+<td><span>pkt[IP].src</span></td>
+<td><span>IPv4 출발지 읽기·수정</span></td>
+<td><span>pkt[IP].src = "192.0.2.10"</span></td>
+</tr>
+<tr>
+<td><span>pkt[IP].dst</span></td>
+<td><span>IPv4 목적지 읽기·수정</span></td>
+<td><span>pkt[IP].dst = "192.0.2.20"</span></td>
+</tr>
+<tr>
+<td><span>pkt[IP].ttl</span></td>
+<td><span>TTL 수정</span></td>
+<td><span>pkt[IP].ttl = 32</span></td>
+</tr>
+<tr>
+<td><span>pkt[TCP].sport</span></td>
+<td><span>TCP 출발지 포트 수정</span></td>
+<td><span>pkt[TCP].sport = 12345</span></td>
+</tr>
+<tr>
+<td><span>pkt[TCP].dport</span></td>
+<td><span>TCP 목적지 포트 수정</span></td>
+<td><span>pkt[TCP].dport = 8080</span></td>
+</tr>
+<tr>
+<td><span>pkt[TCP].flags</span></td>
+<td><span>TCP 플래그 수정</span></td>
+<td><span>pkt[TCP].flags = "S"</span></td>
+</tr>
+<tr>
+<td><span>pkt[TCP].seq</span></td>
+<td><span>TCP Sequence Number 수정</span></td>
+<td><span>pkt[TCP].seq = 1000</span></td>
+</tr>
+<tr>
+<td><span>pkt[TCP].ack</span></td>
+<td><span>TCP Acknowledgment Number 수정</span></td>
+<td><span>pkt[TCP].ack = 1001</span></td>
+</tr>
+<tr>
+<td><span>pkt[Raw].load</span></td>
+<td><span>Raw 데이터 수정</span></td>
+<td><span>pkt[Raw].load = b"NEW"</span></td>
+</tr>
+<tr>
+<td><span>del pkt[IP].chksum</span></td>
+<td><span>기존 IPv4 체크섬 필드 제거</span></td>
+<td><span>del pkt[IP].chksum</span></td>
+</tr>
+<tr>
+<td><span>del pkt[TCP].chksum</span></td>
+<td><span>기존 TCP 체크섬 필드 제거</span></td>
+<td><span>del pkt[TCP].chksum</span></td>
+</tr>
+<tr>
+<td><span>checksum()</span></td>
+<td><span>바이트 데이터의 인터넷 체크섬 계산</span></td>
+<td><span>checksum(b"\x00\x01")</span></td>
+</tr>
+<tr>
+<td><span>in4_chksum()</span></td>
+<td><span>IPv4 의사 헤더를 고려한 L4 체크섬 계산</span></td>
+<td><span>in4_chksum(17, pkt[IP], udp_bytes)</span></td>
+</tr>
+<tr>
+<td><span>fragment()</span></td>
+<td><span>IPv4 패킷 단편화</span></td>
+<td><span>fragment(pkt, fragsize=1480)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>&nbsp;</p>
+<h2>7. PCAP 파일 입출력</h2>
+<div>
+<table>
+<tbody>
+<tr>
+<td><span>rdpcap()</span></td>
+<td><span>PCAP/PCAPNG 읽기</span></td>
+<td><span>pkts = rdpcap("capture.pcap")</span></td>
+</tr>
+<tr>
+<td><span>wrpcap()</span></td>
+<td><span>PCAP 저장</span></td>
+<td><span>wrpcap("output.pcap", pkts)</span></td>
+</tr>
+<tr>
+<td><span>wrpcapng()</span></td>
+<td><span>PCAPNG 저장</span></td>
+<td><span>wrpcapng("output.pcapng", pkts)</span></td>
+</tr>
+<tr>
+<td><span>PcapReader()</span></td>
+<td><span>PCAP을 순차적으로 읽기</span></td>
+<td><span>PcapReader("capture.pcap")</span></td>
+</tr>
+<tr>
+<td><span>PcapWriter()</span></td>
+<td><span>PCAP 스트리밍 기록</span></td>
+<td><span>PcapWriter("output.pcap")</span></td>
+</tr>
+<tr>
+<td><span>RawPcapReader()</span></td>
+<td><span>원시 패킷 바이트와 메타데이터 읽기</span></td>
+<td><span>RawPcapReader("capture.pcap")</span></td>
+</tr>
+<tr>
+<td><span>RawPcapWriter()</span></td>
+<td><span>원시 패킷을 PCAP 형식으로 기록</span></td>
+<td><span>RawPcapWriter("output.pcap", linktype=1)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>&nbsp;</p>
+<h2>8. 패킷 목록 분석</h2>
+<div>
+<table>
+<tbody>
+<tr>
+<td><span>packets.summary()</span></td>
+<td><span>모든 패킷 간단 요약</span></td>
+<td><span>packets.summary()</span></td>
+</tr>
+<tr>
+<td><span>packets.nsummary()</span></td>
+<td><span>번호와 함께 요약</span></td>
+<td><span>packets.nsummary()</span></td>
+</tr>
+<tr>
+<td><span>packets.show()</span></td>
+<td><span>패킷 목록 출력</span></td>
+<td><span>packets.show()</span></td>
+</tr>
+<tr>
+<td><span>packets.filter()</span></td>
+<td><span>조건에 따라 패킷 목록 필터링</span></td>
+<td><span>packets.filter(lambda p: TCP in p)</span></td>
+</tr>
+<tr>
+<td><span>packets.sessions()</span></td>
+<td><span>패킷을 세션별로 분류</span></td>
+<td><span>packets.sessions()</span></td>
+</tr>
+<tr>
+<td><span>packets.make_table()</span></td>
+<td><span>지정한 항목으로 표 생성</span></td>
+<td><span>packets.make_table(lambda s,r: (s[IP].src, r[IP].dst, r[TCP].dport))</span></td>
+</tr>
+<tr>
+<td><span>packets.plot()</span></td>
+<td><span>패킷 값 시각화</span></td>
+<td><span>packets.plot(lambda p: len(p))</span></td>
+</tr>
+<tr>
+<td><span>packets.timeskew_graph()</span></td>
+<td><span>패킷 시간 편차 관련 그래프</span></td>
+<td><span>packets.timeskew_graph()</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>&nbsp;</p>
+<h2>9. 네트워크 인터페이스와 라우팅</h2>
+<div>
+<p>&nbsp;</p>
+<table>
+<tbody>
+<tr>
+<td><span>get_if_list()</span></td>
+<td><span>인터페이스 이름 목록</span></td>
+<td><span>get_if_list()</span></td>
+</tr>
+<tr>
+<td><span>show_interfaces()</span></td>
+<td><span>인터페이스 정보 출력</span></td>
+<td><span>show_interfaces()</span></td>
+</tr>
+<tr>
+<td><span>get_if_addr()</span></td>
+<td><span>인터페이스 IPv4 주소 조회</span></td>
+<td><span>get_if_addr("eth0")</span></td>
+</tr>
+<tr>
+<td><span>get_if_hwaddr()</span></td>
+<td><span>인터페이스 MAC 주소 조회</span></td>
+<td><span>get_if_hwaddr("eth0")</span></td>
+</tr>
+<tr>
+<td><span>getmacbyip()</span></td>
+<td><span>IPv4 목적지에 도달할 다음 홉의 MAC 조회</span></td>
+<td><span>getmacbyip("192.0.2.1")</span></td>
+</tr>
+<tr>
+<td><span>get_if_addr6()</span></td>
+<td><span>인터페이스 IPv6 주소 조회</span></td>
+<td><span>get_if_addr6("eth0")</span></td>
+</tr>
+<tr>
+<td><span>conf.iface</span></td>
+<td><span>기본 사용 인터페이스 설정/조회</span></td>
+<td><span>conf.iface</span></td>
+</tr>
+<tr>
+<td><span>conf.route</span></td>
+<td><span>Scapy의 IPv4 라우팅 테이블</span></td>
+<td><span>conf.route</span></td>
+</tr>
+<tr>
+<td><span>conf.route.route()</span></td>
+<td><span>목적지 라우팅 결정 조회</span></td>
+<td><span>conf.route.route("192.0.2.1")</span></td>
+</tr>
+<tr>
+<td><span>conf.route6</span></td>
+<td><span>Scapy IPv6 라우팅 테이블</span></td>
+<td><span>conf.route6</span></td>
+</tr>
+<tr>
+<td><span>conf.verb</span></td>
+<td><span>Scapy 출력 상세도 설정</span></td>
+<td><span>conf.verb = 0</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>&nbsp;</p>
+<h2>10. 네트워크 진단 및 프로토콜 탐색</h2>
+<div>
+<p>&nbsp;</p>
+<table>
+<tbody>
+<tr>
+<td><span>traceroute()</span></td>
+<td><span>경로의 홉 탐색</span></td>
+<td><span>traceroute(["127.0.0.1"], maxttl=3)</span></td>
+</tr>
+<tr>
+<td><span>traceroute6()</span></td>
+<td><span>IPv6 경로 탐색</span></td>
+<td><span>traceroute6(["::1"], maxttl=3)</span></td>
+</tr>
+<tr>
+<td><span>arping()</span></td>
+<td><span>ARP 요청/응답 관찰</span></td>
+<td><span>arping("192.0.2.0/30")</span></td>
+</tr>
+<tr>
+<td><span>promiscping()</span></td>
+<td><span>인터페이스의 프로미스큐어스 모드 관련 탐지</span></td>
+<td><span>promiscping("192.0.2.1")</span></td>
+</tr>
+<tr>
+<td><span>report_ports()</span></td>
+<td><span>TCP 포트 응답 관련 보고</span></td>
+<td><span>report_ports("127.0.0.1", (80, 443))</span></td>
+</tr>
+<tr>
+<td><span>tshark()</span></td>
+<td><span>패킷을 텍스트 방식으로 출력</span></td>
+<td><span>tshark(count=5)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>&nbsp;</p>
+<h2>11. 패킷 테스트 및 Fuzzing</h2>
+<div>
+<table>
+<tbody>
+<tr>
+<td><span>RandByte()</span></td>
+<td><span>임의 1바이트 값 생성</span></td>
+<td><span>RandByte()</span></td>
+</tr>
+<tr>
+<td><span>RandShort()</span></td>
+<td><span>임의 16비트 값 생성</span></td>
+<td><span>RandShort()</span></td>
+</tr>
+<tr>
+<td><span>RandInt()</span></td>
+<td><span>임의 32비트 값 생성</span></td>
+<td><span>RandInt()</span></td>
+</tr>
+<tr>
+<td><span>RandIP()</span></td>
+<td><span>임의 IPv4 주소 값</span></td>
+<td><span>RandIP()</span></td>
+</tr>
+<tr>
+<td><span>RandMAC()</span></td>
+<td><span>임의 MAC 주소 값</span></td>
+<td><span>RandMAC()</span></td>
+</tr>
+<tr>
+<td><span>RandString()</span></td>
+<td><span>임의 바이트 문자열</span></td>
+<td><span>RandString(8)</span></td>
+</tr>
+<tr>
+<td><span>fuzz()</span></td>
+<td><span>기본 필드 값을 무작위화한 패킷 생성</span></td>
+<td><span>fuzz(IP()/TCP())</span></td>
+</tr>
+<tr>
+<td><span>corrupt_bytes()</span></td>
+<td><span>지정 비율/개수의 바이트 변경</span></td>
+<td><span>corrupt_bytes(b"hello", n=1)</span></td>
+</tr>
+<tr>
+<td><span>corrupt_bits()</span></td>
+<td><span>지정 비율/개수의 비트 변경</span></td>
+<td><span>corrupt_bits(b"hello", n=1)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Fuzzing은 비정상적이거나 다양한 입력에 대해 소프트웨어가 어떻게 동작하는지 검증하는 방법이다.</p>
+<p>Scapy가 생성한 비정상 패킷이 네트워크에서 실제로 그대로 송신·수신된다는 보장은 없기 때문에 유용할듯 하다.</p>
+<h2>12. 프로토콜 계층 확장 및 디코딩</h2>
+<div>
+<table>
+<tbody>
+<tr>
+<td><span>bind_layers()</span></td>
+<td><span>하위 프로토콜과 상위 프로토콜 연결</span></td>
+<td><span>bind_layers(UDP, Raw, dport=9999)</span></td>
+</tr>
+<tr>
+<td><span>split_layers()</span></td>
+<td><span>등록된 계층 바인딩 해제</span></td>
+<td><span>split_layers(UDP, Raw, dport=9999)</span></td>
+</tr>
+<tr>
+<td><span>bind_bottom_up()</span></td>
+<td><span>디코딩 방향의 바인딩 추가</span></td>
+<td><span>bind_bottom_up(UDP, Raw, dport=9999)</span></td>
+</tr>
+<tr>
+<td><span>bind_top_down()</span></td>
+<td><span>패킷 생성 방향의 바인딩 추가</span></td>
+<td><span>bind_top_down(UDP, Raw, dport=9999)</span></td>
+</tr>
+<tr>
+<td><span>Packet</span></td>
+<td><span>사용자 정의 프로토콜 클래스의 기본형</span></td>
+<td><span>class Custom(Packet): ...</span></td>
+</tr>
+<tr>
+<td><span>ByteField()</span></td>
+<td><span>1바이트 필드 정의</span></td>
+<td><span>ByteField("type", 1)</span></td>
+</tr>
+<tr>
+<td><span>ShortField()</span></td>
+<td><span>2바이트 정수 필드 정의</span></td>
+<td><span>ShortField("length", 0)</span></td>
+</tr>
+<tr>
+<td><span>IntField()</span></td>
+<td><span>4바이트 정수 필드 정의</span></td>
+<td><span>IntField("id", 0)</span></td>
+</tr>
+<tr>
+<td><span>StrLenField()</span></td>
+<td><span>길이가 정해지는 바이트 문자열 필드</span></td>
+<td><span>StrLenField("data", b"", length_from=lambda p: p.length)</span></td>
+</tr>
+<tr>
+<td><span>FieldLenField()</span></td>
+<td><span>다른 필드의 길이나 개수 표현</span></td>
+<td><span>FieldLenField("length", None, length_of="data", fmt="!H")</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>이 기능을 활용하면 지원되지 않는 자체 프로토콜의 헤더 형식을 정의하고 Scapy가 이를 분석하도록 확장할 수 있다.</p>
+<p><span>더 궁금하다면? <a href="https://scapy.readthedocs.io/en/latest/api/scapy.utils.html">https://scapy.readthedocs.io/en/latest/api/scapy.utils.html</a></span></p>
+<figure><a href="https://scapy.readthedocs.io/en/latest/api/scapy.utils.html">
+<div>&nbsp;</div>
+<div>
+<p>scapy.utils — Scapy 2.8.0 documentation</p>
+<p>Return whether C is a class and if it is a subclass of class B. When using a tuple as the second argument issubtype(X, (A, B, …)), is a shortcut for issubtype(X, A) or issubtype(X, B) or … (etc.).</p>
+<p>scapy.readthedocs.io</p>
+</div>
+</a></figure>
+<p>&nbsp;</p>
+<p>이런게 있다 싶으면서도 보기만해도 참 어렵다..</p>
+<p>그래도 패킷변조를 위해서는 필수적이니 공부해보기로 한다.</p>
+<p>다음에는 scapy 를 활용해 간단한 프로그램을 만들어보며 사용방법을 익힐 예정이다.</p></div><p class="source-note">원문: <a href="https://ms-egg.tistory.com/22" target="_blank" rel="noopener noreferrer">Tistory ↗</a></p><a class="back" href="../../archive/">← 기록으로</a></article><footer><span>© 2026 Raw_Egg</span><a href="https://github.com/BackedEgg" target="_blank" rel="noopener noreferrer">GitHub ↗</a></footer></main></body></html>

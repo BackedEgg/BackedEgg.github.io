@@ -1,0 +1,13 @@
+{
+  "title": "Web - Claim trust",
+  "date": "2026-10-10",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명: 아이디만 입력하면 로그인되고, 그 이후 서명된 토큰으로 `/admin` 접근을 시도할 수 있는 단체 포털이다. 목표: 발급받은 토큰으로 관리자 권한을 얻어라 writeup : 페이지를 들…",
+  "previewTitle": "Web - Claim trust",
+  "previewExcerpt": "문제설명: 아이디만 입력하면 로그인되고, 그 이후 서명된 토큰으로 `/admin` 접근을 시도할 수 있는 단체 포털이다. 목표: 발급받은 토큰으로 관리자 권한을 얻어라 writeup : 페이지를 들…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/14",
+  "sourceCategory": "STUDY/Write up"
+}

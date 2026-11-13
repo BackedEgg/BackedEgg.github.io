@@ -1,0 +1,13 @@
+{
+  "title": "Web - Poisoned Reset Link",
+  "date": "2026-10-12",
+  "category": "ctf-wargame",
+  "excerpt": "문제 설명: 비밀번호를 잊었을 때 재설정 링크를 발급해주는 라이딩 모임 포털이다. 목표 : 재설정 링크가 공격자의 주소를 가리키게 만들어라. write up: 페이지에는 이메일 입력해 재설정요청을 …",
+  "previewTitle": "Web - Poisoned Reset Link",
+  "previewExcerpt": "문제 설명: 비밀번호를 잊었을 때 재설정 링크를 발급해주는 라이딩 모임 포털이다. 목표 : 재설정 링크가 공격자의 주소를 가리키게 만들어라. write up: 페이지에는 이메일 입력해 재설정요청을 …",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/21",
+  "sourceCategory": "STUDY/Write up"
+}

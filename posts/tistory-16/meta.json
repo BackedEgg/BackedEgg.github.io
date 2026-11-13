@@ -1,0 +1,13 @@
+{
+  "title": "Web - Algorithm Confusion",
+  "date": "2026-10-12",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명: RS256으로 토큰에 서명하는 모임 회원 포털이다. 다른 서비스가 검증에 쓸 수 있도록 공개키도 공개되어있다. 목표: 공개되어 있는 키를 이용해 토큰 서명을 위조하라. 페이지에 들어가 증…",
+  "previewTitle": "Web - Algorithm Confusion",
+  "previewExcerpt": "문제설명: RS256으로 토큰에 서명하는 모임 회원 포털이다. 다른 서비스가 검증에 쓸 수 있도록 공개키도 공개되어있다. 목표: 공개되어 있는 키를 이용해 토큰 서명을 위조하라. 페이지에 들어가 증…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/16",
+  "sourceCategory": "STUDY/Write up"
+}

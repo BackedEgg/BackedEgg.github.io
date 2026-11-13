@@ -1,0 +1,13 @@
+{
+  "title": "Web - Hidden API",
+  "date": "2026-10-12",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명 : 회원현황과 공지를 보여주는 공유오피스 대시보드입니다. 화면은 프런트엔드가 현재 사용자의 역할에 맞춰 메뉴를 구성해 그립니다. 목표: 일반 회원 계정으로, 메뉴에 보이지 않는 관리자 기능…",
+  "previewTitle": "Web - Hidden API",
+  "previewExcerpt": "문제설명 : 회원현황과 공지를 보여주는 공유오피스 대시보드입니다. 화면은 프런트엔드가 현재 사용자의 역할에 맞춰 메뉴를 구성해 그립니다. 목표: 일반 회원 계정으로, 메뉴에 보이지 않는 관리자 기능…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/17",
+  "sourceCategory": "STUDY/Write up"
+}

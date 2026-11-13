@@ -1,0 +1,13 @@
+{
+  "title": "Web - Remember Me",
+  "date": "2026-10-12",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명 : 로그인할 때 '로그인 상태 유지'를 체크할 수 있는 편집 모임 포털이다. 체크하고 로그인하면 브라우저를 닫았다가 다시 열어도 로그인이 풀리지 않는다. 목표: 로그인 없이 admin으로 …",
+  "previewTitle": "Web - Remember Me",
+  "previewExcerpt": "문제설명 : 로그인할 때 '로그인 상태 유지'를 체크할 수 있는 편집 모임 포털이다. 체크하고 로그인하면 브라우저를 닫았다가 다시 열어도 로그인이 풀리지 않는다. 목표: 로그인 없이 admin으로 …",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/19",
+  "sourceCategory": "STUDY/Write up"
+}

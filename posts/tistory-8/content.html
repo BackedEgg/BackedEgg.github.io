@@ -1,0 +1,127 @@
+<p>이더넷 헤더에 대해 알아보고 직접 FCS를 계산하는 코드를 작성해볼것이다.</p>
+<p></p><figure><span><img src="image-1.png"></span><figcaption>출처 : 위키피디아</figcaption>
+</figure>
+<p></p>
+<p>이더넷 헤더다.</p>
+<p>non part of the frame 이라고 적혀져있는것은 말 그대로 우리 알빠 아니고 phsycial layer에서 작동한다고 한다.</p>
+<p>그래도 공부하는김에 알고가자면</p>
+<p>Preamble: 송신자와 수신자의 쿨럭수를 맞춘다.</p>
+<p>+) 만약 보내는 쪽이 1초에 9개의 비트를 쏘고 있는데 받는쪽이 1초에 8개의 비트를 받는다고 상상하면 상상만으로 곤란해질것이다.</p>
+<p>Start frame delimiter(SFD) : 저 Preamble이 끝났다는것을 알리고 진짜 이더넷 헤더가 시작된다는것을 알린다.</p>
+<p>Destination Mac: 목적지 맥주소</p>
+<p>Source Mac: 보내는 맥주소</p>
+<p>&nbsp;</p>
+<p>※ 왜 DMac이 SMac보다 앞에 있을까?</p>
+<p>데이터가&nbsp;들어오면&nbsp;랜카드는&nbsp;dmac주소를&nbsp;보고&nbsp;버릴지&nbsp;말지&nbsp;결정한다.&nbsp; <br>맥주소가&nbsp;앞에&nbsp;있으면&nbsp;앞의&nbsp;6바이트만&nbsp;읽고&nbsp;버릴&nbsp;패킷인지&nbsp;아닌지&nbsp;결정할&nbsp;수&nbsp;있다. <br>실질적으로&nbsp;모든&nbsp;패킷을&nbsp;다&nbsp;읽어서&nbsp;메모리에&nbsp;올린&nbsp;후&nbsp;cpu에&nbsp;넘겨줄&nbsp;수는&nbsp;없기에 <br>맥주소를&nbsp;앞에다가&nbsp;적어&nbsp;cpu의&nbsp;부하를&nbsp;막고&nbsp;속도를&nbsp;개선한다.</p>
+<p>&nbsp;</p>
+<p>Ethertype or Length: 상위계층에서&nbsp;어떤&nbsp;프로토콜을&nbsp;사용하는지&nbsp;나타낸다.&nbsp; <br>+) IPv4는 0x0800, Arp = 0x0806을 사용한다.<br>pyload&nbsp;:&nbsp;실제&nbsp;데이터가&nbsp;담기는&nbsp;일종의&nbsp;알맹이라&nbsp;할&nbsp;수있다. <br>FCS: 전송도중 데이터가 깨졌는지 검사하기위한 오류검출코드이다. 바로 다음 네트워크 장비까지 가는 동안의 무결성을 보장하지만 전체 데이터의 무결성을 보장하지는 않는다.<br>IPG : 프레임간 간격, 다음 프레임이 들어오기 전 회선을 비워두는 시간이다.</p>
+<p>&nbsp;</p>
+<p></p><figure><span><img src="image-2.png"></span><figcaption>출처 : 위키피디아</figcaption>
+</figure>
+<p></p>
+<p>실질적으로 신경써야하는 부분이다.</p>
+<p>fcs 를 계산해야하기 때문이다.</p>
+<p>&nbsp;</p>
+<p>fcs를 계산하는 방법은 다음과 같다.</p>
+<p>1.&nbsp;이더넷&nbsp;헤더와&nbsp;데이터&nbsp;페이로드를&nbsp;이진수로&nbsp;변환 <br>2. 32개의 0을 넣어서 생성다항식과 32비트의 나머지가 나올때까지 xor&nbsp;<br>3.&nbsp;나머지를&nbsp;반전시키기</p>
+<p>&nbsp;</p>
+<p>이때, 나온 32비트의 나머지가 fcs이고 이것으로 데이터링크계층에서 전송 도중 데이터가 손상되었는지 확인할 수 있다 .</p>
+<p>&nbsp;</p>
+<p>여기서 들 수 있는 의문은 왜 Xor 연산을 하는가이다.</p>
+<p>기본적으로 목적은 나머지를 남기는것이다.</p>
+<p>이때, 컴퓨터 알고리즘 상의 가장 효율적인 나머지 연산이 xor이기 때문이다.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>간단해보여도 막상 코드로 구현하려면 막막하다.</p>
+<p>최대한 ai를 사용하지않고 만들려다보니 별거아닌코드도 시간이 걸린다. 한 일주일 걸린것 같다.</p>
+<pre><code>from curses import raw
+import sys
+import socket
+from tkinter.ttk import Widget
+import zlib
+
+
+
+class About_Packets:
+    def __init__(self):
+        
+            raw_Eth = 0x0003 #3412
+            ntohs = ((raw_Eth &amp; 0x00FF) &lt;&lt; 8) | ((raw_Eth &amp; 0xFF00) &gt;&gt; 8)
+
+            conn = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(raw_Eth))
+            print("패킷 캡처")
+            
+        
+            raw_data, addr = conn.recvfrom(65535)
+
+            self.D_Mac = raw_data[0:6]
+            self.S_Mac = raw_data[6:12]
+            self.EtherType = raw_data[12:14]
+            self.DataPayload = raw_data[14:]
+            
+            
+
+class Calculate_Fcs(About_Packets):
+    def __init__(self):
+        super().__init__()
+        
+    def calculate_crc32(self):
+        super().__init__()
+        self.Data = self.D_Mac + self.S_Mac + self.EtherType + self.DataPayload
+        i = 0 
+        fcs_value = zlib.crc32(self.Data)
+        crc = 0xFFFFFFFF
+        poly = 0xEDB88320
+        for byte in self.Data:
+            
+            crc ^= byte #한바이트
+            print("and" ,hex(crc),"num: ",i)
+            for _ in range(8):
+                if crc &amp; 1:
+                    crc = (crc &gt;&gt; 1) ^ poly
+                    print("crc = 1: " , hex(crc))
+                else:
+                    crc &gt;&gt;= 1
+                    print("crc!= 1:", hex(crc))
+            final_crc = ~crc &amp; 0xFFFFFFFF
+            i += 1
+            
+
+        print(f"final crc:(Hex): {hex(final_crc)}")
+        print(f"Calculated FCS (Hex): {hex(fcs_value)}")
+                
+        
+
+ 
+if __name__ == "__main__":
+    packet = About_Packets()
+    packet = Calculate_Fcs()
+   
+    packet.calculate_crc32()</code></pre>
+<p>변수 i는 그냥 흐름을 보기 쉬우라고 넣어놓은거다.</p>
+<div>
+<div><span>#바이트를 하나씩 꺼내기</span></div>
+<div><span>#각 바이트의 8개 비트를 왼쪽부터 하나씩 계산</span></div>
+<div><span>#가장왼쪽 비트를 기준으로 계산할지말지결정</span></div>
+<div><span>#레지스터를 한칸 밀고, 가져온 데이터 붙이기</span></div>
+<div><span>#xor하기</span></div>
+<br>
+<div><span>#그리고 비트 뒤집기기</span></div>
+</div>
+<p>위를 기준으로 만들었다.</p>
+<p>&nbsp;</p>
+<h4>이때 비트를 뒤집는 이유는</h4>
+<p>만약에 최종 CRC값이 0x00000000 인 패킷이 있다고 했을때 전송도중에 하드웨어 오작동으로 패킷 맨 끝에 쓰레기 데이터 0x00 이 더 붙여서 오면 이 에러패킷을 정상이라고 판단할 가능성이 있다.<br><br>그리고 무엇보다 수신측 검증과정을 단순화시켜준다. <br><br>반전을&nbsp;안했을때는 <br>crc값과&nbsp;데이터를&nbsp;나눠서&nbsp;분리해&nbsp;연산해&nbsp;결과&nbsp;비교를&nbsp;해야한다. </p>
+<p>&nbsp;</p>
+<p>하지만</p>
+<p>&nbsp;</p>
+<p>반전을&nbsp;했을때는 <br>정상패킷일&nbsp;경우&nbsp;수신측에서&nbsp;전체를&nbsp;통째로&nbsp;연산하면되는데&nbsp;이때,&nbsp;빅엔디안&nbsp;기준&nbsp;0xC704DD7B&nbsp;(리틀엔디안&nbsp;기준&nbsp;0x2144DF1C)&nbsp;인지만&nbsp;확인하면&nbsp;되기&nbsp;때문에&nbsp;편하다.</p>
+<p>&nbsp;</p>
+<p>그래도 로그인도 안한 나에게 도움을 준 재미나이행님께 무한한 감사를...</p>
+<p><s>근데 좀 한번에 알려줄 수는 없니</s></p>
+<p>&nbsp;</p>
+<p>예제코드 보고 이해하고 만들고 다시 보고 이해하고 만들고의 반복이었다.</p>
+<p>이게 무슨의미인가 싶긴했고 어려웠지만,, 재미있었다.</p>
+<p>실제로도 코드 구현해보니 xor은 나머지를 찾는데 초점이 맞춰져있는듯 해보였다.</p>
+<p>&nbsp;</p>
+<p>다음은 netfilter을 활용해서 패킷변조, 차단등을 해보아야겠다.</p>

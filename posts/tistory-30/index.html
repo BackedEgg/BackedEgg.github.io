@@ -1,0 +1,21 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Raw_Egg의 개발·보안 학습 기록"><meta name="theme-color" content="#fff9ed"><title>Web - Numeric Lookup · Raw_Egg</title><link rel="stylesheet" href="../../style.css"><link rel="stylesheet" href="../../egg-extra.css"><script src="../../app.js" defer></script></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><aside class="rail"><a class="logo" href="../../" aria-label="Raw_Egg 홈"><span class="logo-shape"><i></i></span><span>Raw_Egg<span class="period">.</span></span></a><nav class="rail-nav" aria-label="주 메뉴"><a  href="../../">Home</a><a aria-current="page" href="../../archive/">Records</a><a  href="../../categories/">Categories</a><a  href="../../about/">About</a></nav><div class="rail-bottom"><span>make me baked<span class="period">.</span></span><button class="theme" type="button" aria-label="색상 모드 전환">◐ <span>Dark</span></button></div></aside><header class="mobile-head"><a href="../../">🥚 Raw_Egg.</a><button class="menu" type="button" aria-expanded="false" aria-label="메뉴 열기">☰</button></header><main id="main" class="main"><article class="article"><a class="back" href="../../archive/">← 기록으로</a><header class="article-head"><span class="kicker">2026-11-10 · RECORD</span><h1>Web - Numeric Lookup</h1><p>문제설명: 부서방 비품 재고를 번호로 조회하는 내부 단말이다. 대장에는 1~5번 품목이 올라와 있다. 목표 : 대장에 올라와 있지 않은 비품 기록을 꺼내라 여기서 조회를 할 수 있다. 비품에 없는 …</p></header><div class="article-body"><h3>문제설명:</h3>
+<p>부서방 비품 재고를 번호로 조회하는 내부 단말이다. 대장에는 1~5번 품목이 올라와 있다.</p>
+<h3>목표 :&nbsp;</h3>
+<p>대장에 올라와 있지 않은 비품 기록을 꺼내라</p>
+<p></p><figure><span><img src="image-1.png"></span></figure>
+<p></p>
+<p>여기서 조회를 할 수 있다.</p>
+<p></p><figure><span><img src="image-2.png"></span></figure>
+<p></p>
+<p>비품에 없는 숫자를 집어넣으면 저렇게 아무것도 안나온다.</p>
+<p>&nbsp;</p>
+<p>Burpsuite 로 잡아보면 다음과 같은 요청이 나오는것을 확인할 수 있다.</p>
+<p></p><figure><span><img src="image-3.png"></span></figure>
+<p></p>
+<p>&nbsp;</p>
+<p>그러면 id=1 에 해당하는 값을 찾아올것이다.</p>
+<p>그러면 여기다가 참인 값을 넣으면 조회범위가 넓어지지않을까</p>
+<p>그래서 id = 1 or 1=1 을 넣었다.</p>
+<p></p><figure><span><img src="image-4.png"></span></figure>
+<p></p>
+<p>&nbsp;</p></div><p class="source-note">원문: <a href="https://ms-egg.tistory.com/30" target="_blank" rel="noopener noreferrer">Tistory ↗</a></p><a class="back" href="../../archive/">← 기록으로</a></article><footer><span>© 2026 Raw_Egg</span><a href="https://github.com/BackedEgg" target="_blank" rel="noopener noreferrer">GitHub ↗</a></footer></main></body></html>

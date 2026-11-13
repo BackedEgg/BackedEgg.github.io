@@ -1,0 +1,235 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Raw_Egg의 개발·보안 학습 기록"><meta name="theme-color" content="#fff9ed"><title>웹(1) GET/POST · Raw_Egg</title><link rel="stylesheet" href="../../style.css"><link rel="stylesheet" href="../../egg-extra.css"><script src="../../app.js" defer></script></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><aside class="rail"><a class="logo" href="../../" aria-label="Raw_Egg 홈"><span class="logo-shape"><i></i></span><span>Raw_Egg<span class="period">.</span></span></a><nav class="rail-nav" aria-label="주 메뉴"><a  href="../../">Home</a><a aria-current="page" href="../../archive/">Records</a><a  href="../../categories/">Categories</a><a  href="../../about/">About</a></nav><div class="rail-bottom"><span>make me baked<span class="period">.</span></span><button class="theme" type="button" aria-label="색상 모드 전환">◐ <span>Dark</span></button></div></aside><header class="mobile-head"><a href="../../">🥚 Raw_Egg.</a><button class="menu" type="button" aria-expanded="false" aria-label="메뉴 열기">☰</button></header><main id="main" class="main"><article class="article"><a class="back" href="../../archive/">← 기록으로</a><header class="article-head"><span class="kicker">2026-10-15 · RECORD</span><h1>웹(1) GET/POST</h1><p>학습 주제: HTTP Request/Response, Header/Body, GET/POST, URL 및 쿼리 문자열, Cookie/Session, 인증과 인가, 접근 제어 취약점, Burp Sui…</p></header><div class="article-body"><p><b>학습 주제:</b> HTTP Request/Response, Header/Body, GET/POST, URL 및 쿼리 문자열, Cookie/Session, 인증과 인가, 접근 제어 취약점, Burp Suite Repeater</p>
+<p><b>실습 플랫폼:</b> PortSwigger Web Security Academy&nbsp;&nbsp;</p>
+<h2>1. 웹의 기본 구조: 브라우저와 서버</h2>
+<p>웹 서비스를 사용할 때 브라우저는 <b>클라이언트(Client)</b>이고, 요청을 받아 처리하는 프로그램은 <b>서버(Server)</b>다.</p>
+<p>클라이언트가 HTTP 요청(Request)을 보내면 서버는 처리 결과를 HTTP 응답(Response)으로 돌려준다.</p>
+<p>브라우저는 응답으로 받은 HTML, CSS, JavaScript 및 기타 리소스를 해석해 페이지를 표시한다.</p>
+<p>예를 들어 주소창에 <a href="https://example.com/login">https://example.com/login</a>을 입력하면 일반적으로 DNS를 통해 서버 주소를 확인하고, 서버와 연결을 수립한 뒤, HTTPS에서는 TLS로 통신을 보호한다.</p>
+<p>이후 브라우저가 페이지를 요청하고 서버가 응답한다.</p>
+<p>실제 세부 연결 절차는 HTTP/1.1, HTTP/2, HTTP/3 및 연결 재사용 여부에 따라 달라질 수 있다.</p>
+<h2>2. HTTP Request와 Response</h2>
+<h3>2-1. HTTP Request</h3>
+<p>아래는 HTTP/1.1의 텍스트 표현이다. 시작 줄, 헤더, 빈 줄, 선택적인 본문으로 구성된다.</p>
+<pre><code>GET /login HTTP/1.1
+Host: example.com
+User-Agent: Mozilla/5.0
+Accept: text/html
+
+</code></pre>
+<ul>
+<li>GET: 요청 메서드. 주로 리소스 조회에 사용한다.</li>
+<li>/login: 요청 경로.</li>
+<li>HTTP/1.1: HTTP 버전.</li>
+<li>Host: 요청 대상 호스트.</li>
+<li>User-Agent: 클라이언트 프로그램 정보.</li>
+<li>Accept: 클라이언트가 처리 가능한 응답 미디어 타입.</li>
+</ul>
+<p>위 요청은 본문이 없다. 모든 요청에 Body가 존재하는 것은 아니다. 또한 HTTP/2와 HTTP/3는 HTTP/1.1의 시작 줄을 그대로 전송하지 않고, 의사 헤더(:method, :path 등)를 사용하는 다른 메시지 표현을 갖는다. Burp Suite는 분석하기 편한 텍스트 형태로 보여줄 수 있다.</p>
+<h3>2-2. HTTP Response</h3>
+<pre><code>HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 19</code></pre>
+<p>응답은</p>
+<p>상태 줄, 응답 헤더, 빈 줄, 선택적인 본문으로 구성된다.</p>
+<p>위 예시 본문은 ASCII 기준 19바이트다. HTTP 상태 코드의 첫 번째 숫자를 보면 대략적인 분류를 이해할 수 있다.</p>
+<table>
+<tbody>
+<tr>
+<td>200</td>
+<td>OK</td>
+<td>성공적으로 처리됨</td>
+</tr>
+<tr>
+<td>301 / 302</td>
+<td>리다이렉트</td>
+<td>Location 헤더 확인</td>
+</tr>
+<tr>
+<td>400</td>
+<td>Bad Request</td>
+<td>파라미터 누락·형식 오류 등</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+<td>인증 관련 응답</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden</td>
+<td>권한 거부 여부 조사</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Not Found</td>
+<td>경로 및 리소스 확인</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Internal Server Error</td>
+<td>서버 내부 오류</td>
+</tr>
+</tbody>
+</table>
+<p>물론, 상태 코드만으로 비즈니스 로직의 성공·실패를 완전히 확정할 수는 없다. 응답 Body, 재접속 결과, 계정 권한 변경 여부 등도 확인해야 한다.</p>
+<h2>3. Header와 Body의 차이</h2>
+<p><b>Header</b>는 요청 또는 응답을 해석하는 데 필요한 메타데이터이며, <b>Body</b>는 실제로 전송하는 본문이다. 아래 로그인 요청에서 빈 줄 위는 헤더이고 빈 줄 아래가 본문이다.</p>
+<pre><code>POST /login HTTP/1.1
+Host: example.com
+Content-Type: application/x-www-form-urlencoded
+
+username=kim&amp;password=1234</code></pre>
+<p>Content-Type: application/x-www-form-urlencoded는 본문이 웹 폼 인코딩 방식이라는 뜻이다.&nbsp; username=kim&amp;password=1234는 본문 데이터다.</p>
+<p>&nbsp;</p>
+<h2>4. GET과 POST, Query String</h2>
+<h3>4-1. GET</h3>
+<p>GET은 주로 리소스를 조회한다. URL에서 ?는 경로와 Query String을 구분하고, &amp;는 여러 파라미터를 구분한다.</p>
+<pre><code>GET /search?keyword=apple&amp;page=2 HTTP/1.1
+Host: example.com</code></pre>
+<p>이 예시의 Path는 /search이고, Query Parameter는 keyword=apple과 page=2다.</p>
+<h3>4-2. POST</h3>
+<p>POST는 데이터를 제출해 서버에 처리를 요청할 때 많이 사용한다. 웹 폼에서는 Body에 데이터를 담는 것이 일반적이다.</p>
+<pre><code>POST /login HTTP/1.1
+Host: example.com
+Content-Type: application/x-www-form-urlencoded
+
+username=kim&amp;password=1234</code></pre>
+<p>GET과 POST의 차이는 'GET에는 무조건 Body가 없고 POST에는 무조건 Body가 있다'는 뜻이 아니다.</p>
+<p>GET 본문은 일반적으로 정의된 의미가 없고 상호운용성 문제가 있어 권장하지 않는다.</p>
+<p>POST 요청도 URL의 Query String을 함께 사용할 수 있다.</p>
+<p>중요한 것은 요청 메서드, 데이터의 실제 위치, 서버가 값을 읽는 방식을 함께 이해하는 것이다.</p>
+<h2>5. Cookie와 Session, 인증과 인가</h2>
+<p>HTTP는 기본적으로 각 요청을 독립적으로 처리한다. 로그인 상태를 유지하기 위해 웹 애플리케이션은 흔히 세션 식별자를 쿠키에 담아 사용한다. 서버가 다음과 같이 쿠키를 설정할 수 있다.</p>
+<pre><code>HTTP/1.1 200 OK
+Set-Cookie: session=EXAMPLE_SESSION; HttpOnly; Secure; SameSite=Lax</code></pre>
+<p>브라우저는 이후 해당 사이트에 대한 요청에 쿠키를 포함할 수 있다.</p>
+<pre><code>GET /my-account HTTP/1.1
+Host: example.com
+Cookie: session=EXAMPLE_SESSION</code></pre>
+<p>쿠키는 브라우저에 저장되는 이름·값 등의 데이터이고, 서버 세션은 서버 측 로그인 상태를 관리하는 방식 중 하나다. 실제 세션 저장 방식은 구현마다 다르므로 모든 웹사이트가 서버 측 세션 저장소를 사용하는 것은 아니다.</p>
+<p><b>인증(Authentication)</b>은 '누구인가?'를 확인하는 과정이고, <b>인가(Authorization)</b>는 '이 사용자가 이 기능을 실행할 권한이 있는가?'를 판단하는 과정이다. 로그인되어 있어도 관리자 기능의 사용 권한은 없을 수 있다.&nbsp;</p>
+<h2>6. HTTP 관찰 및 로컬 실습</h2>
+<h3>6-1. Chrome 개발자 도구</h3>
+<ol>
+<li>Chrome에서 웹사이트를 연다.</li>
+<li>F12로 개발자 도구를 열고 <b>Network</b> 탭을 선택한다.</li>
+<li>페이지를 새로고침하고 문서 요청을 선택한다.</li>
+<li>Headers에서 Request URL, Request Method, Status Code, Request/Response Headers를 확인한다.</li>
+<li>Response 탭에서 HTML 또는 JSON 응답 본문을 확인한다.</li>
+</ol>
+<p>실제 헤더는 브라우저 버전, 서버, 연결 방식에 따라 달라진다. 모든 HTTP 요청이 개발자 도구에 동일한 모양으로 표시되는 것은 아니다.</p>
+<p>&nbsp;</p>
+<h2>6. 실전문제풀이</h2>
+<p>접근 제어는 특정 사용자에게 어떤 리소스와 기능을 허용할지 결정하는 보안 통제다. 일반 사용자가 관리자 기능을 실행할 수 있게 되면 수직적 권한 상승(Vertical Privilege Escalation)이 발생할 수 있다.</p>
+<p>관리자 링크를 화면에서 숨기거나, 관리자 URL을 복잡하게 만들거나, 특정 HTTP Method에서만 검사하는 것은 적절한 인가를 대체하지 못한다. 서버는 실제 실행되는 모든 보호 기능에 대해 요청자의 권한을 확인해야 한다.</p>
+<p>&nbsp;</p>
+<p><b>분석 방법:</b> (1) 문제 설명에서 가설 수립 → (2) URL·HTML·JS·공개 파일·요청 정보 수집 → (3) 정상 동작 요청 확보 → (4) 세션·메서드·파라미터를 한 번에 하나씩 변경 → (5) 응답과 실제 서버 상태를 비교한다.</p>
+<h2>7. Write-up 01: Unprotected admin functionality</h2>
+<p><a href="https://portswigger.net/web-security/access-control/lab-unprotected-admin-functionality">Unprotected admin functionality</a> (Apprentice)</p>
+<h3>7-1. 목표와 분석</h3>
+<p>접근 제어가 없는 관리자 패널을 찾아 carlos 사용자를 삭제한다. 관리자 링크가 보이지 않더라도 관리자 기능 자체가 없다는 것은 아니었다.</p>
+<h3>7-2. 정보 수집: robots.txt</h3>
+<p>사이트 루트에 /robots.txt를 붙여 요청한다.</p>
+<pre><code>GET /robots.txt HTTP/1.1
+Host: LAB_HOST</code></pre>
+<p>공식 실습의 단서는 다음과 같은 내용이다.</p>
+<pre><code>User-agent: *
+Disallow: /administrator-panel</code></pre>
+<p>User-agent: *는 모든 크롤러에 적용되는 규칙을 나타내고, Disallow는 지정 경로를 크롤링하지 말라는 요청이다.&nbsp;</p>
+<h3>7-3. 취약점 검증 및 풀이</h3>
+<p>공개된 관리자 경로로 이동한다.</p>
+<pre><code>GET /administrator-panel HTTP/1.1
+Host: LAB_HOST</code></pre>
+<p>관리자 권한을 증명하지 않고 관리자 화면에 진입할 수 있다. 관리자 패널에서 carlos 사용자를 삭제하여 문제를 완료한다.</p>
+<h3>7-4. 근본 원인과 대응</h3>
+<p>취약점의 본질은 robots.txt 자체가 아니라 <b>관리 기능에 서버 측 인가 검사가 없다</b>는 것이다.</p>
+<p>모든 관리자 페이지와 API에 실제 사용자 권한 검사를 적용하고, 원칙적으로 허용되지 않은 접근을 거부해야 한다.</p>
+<h2>8. Write-up 02: Unprotected admin functionality with unpredictable URL</h2>
+<p><a href="https://portswigger.net/web-security/access-control/lab-unprotected-admin-functionality-with-unpredictable-url">Unprotected admin functionality with unpredictable URL</a> (Apprentice)</p>
+<h3>8-1. 목표와 분석</h3>
+<p>추측하기 어려운 관리자 URL을 발견하고 패널에서 carlos를 삭제한다. 경로를 알기 어렵도록 만들었지만 애플리케이션 내부에서 경로가 노출되어 있다.</p>
+<h3>8-2. HTML과 JavaScript 검사</h3>
+<ol>
+<li>실습 웹사이트 메인 화면을 연다.</li>
+<li>Ctrl+U로 HTML 소스를 보거나 F12 개발자 도구의 Sources/Elements를 확인한다.</li>
+<li>페이지에 포함된 JavaScript를 찾아 관리자 링크를 생성하는 코드나 URL 문자열을 살펴본다.</li>
+</ol>
+<p>아래와 비슷한 코드가 들어있었다.</p>
+<pre><code>var isAdmin = false;
+if (isAdmin) {
+    var link = document.createElement('a');
+    link.href = '/admin-EXAMPLE-PATH';
+    link.textContent = 'Admin panel';
+    document.body.appendChild(link);
+}</code></pre>
+<p>isAdmin이 거짓이면 링크가 화면에 나타나지 않더라도, JavaScript 소스에 적힌 문자열은 사용자가 확인할 수 있다.</p>
+<h3>8-3. 경로 접근 및 해결</h3>
+<p>실제 JavaScript에서 발견한 관리자 URL로 직접 이동하고, 패널에서 carlos를 삭제한다.&nbsp;</p>
+<h3>8-4. 근본 원인과 대응</h3>
+<p>URL을 추측하기 어렵게 만들거나 클라이언트 JavaScript 조건문으로 메뉴를 숨기는 것은 접근 제어가 아니다. 관리자 기능을 제공하는 서버 라우트에서 사용자 인증과 관리자 인가를 별도로 검증해야 한다. 민감한 비밀 값도 클라이언트 JavaScript에 포함하지 않아야 한다.</p>
+<h2>9. Write-up 03: Method-based access control can be circumvented</h2>
+<p><a href="https://portswigger.net/web-security/access-control/lab-method-based-access-control-can-be-circumvented">Method-based access control can be circumvented</a> (Apprentice)</p>
+<h3>9-1. 목표 및 계정</h3>
+<p>HTTP Method에 따라 접근 제어가 불일치하는 기능을 찾아 일반 사용자 wiener의 권한을 관리자로 올려야한다.</p>
+<ul>
+<li>관리자 계정: administrator / admin</li>
+<li>일반 사용자 계정: wiener / peter</li>
+</ul>
+<h3>9-2. 정상 관리자 요청 확보</h3>
+<p>관리자로 로그인하여 관리자 패널의 권한 변경 기능을 실행한 다음, 해당 요청을 Burp Suite Proxy에서 찾아 Repeater로 전송한다.&nbsp;</p>
+<pre><code>POST /admin-roles HTTP/2
+Host: LAB_HOST
+Cookie: session=ADMIN_SESSION
+Content-Type: application/x-www-form-urlencoded
+
+username=carlos&amp;action=upgrade</code></pre>
+<p>&nbsp;</p>
+<p>확인해야할&nbsp; 항목은 메서드 POST, 경로 /admin-roles, 세션 쿠키, 권한 변경 대상 username, 변경 동작 action이다.</p>
+<h3>9-3. 일반 사용자 세션으로 접근 제어 확인</h3>
+<p>시크릿 창에서 wiener로 로그인한 뒤 Repeater의 쿠키를 일반 사용자 세션으로 바꿔 동일한 POST 요청을 시도한다.</p>
+<p>하지만 서버는 Unauthorized라고 응답한다.&nbsp;</p>
+<p>일반 사용자에게 POST 방식의 관리자 기능이 거부됨을 확인할 수 있다.</p>
+<h3>9-4. HTTP Method 변경 시험</h3>
+<p>이후 GET 방식으로 변경한다. Burp Suite Repeater의 <b>Change request method</b> 기능을 활용하면 요청을 수정하기 편하다.</p>
+<h3>9-5. 실패했던 실제 시도와 400 응답</h3>
+<p>학습 과정에서는 GET으로 바꾸었지만 파라미터를 계속 Body에 둔 요청을 시도했다.&nbsp;</p>
+<pre><code>GET /admin-roles HTTP/2
+Host: LAB_HOST
+Cookie: session=REDACTED
+Content-Type: application/x-www-form-urlencoded
+
+username=wiener&amp;action=upgrade</code></pre>
+<p>실제로 관찰한 응답은 다음과 같았다.</p>
+<pre><code>HTTP/2 400 Bad Request
+Content-Type: application/json; charset=utf-8
+
+"Missing parameter 'username'"</code></pre>
+<p>이는 서버가 해당 요청에서 username 파라미터를 찾지 못했다는 뜻이다.</p>
+<p>GET Body가 기술적으로 항상 금지된 것은 아니지만, 이 실습의 GET 처리 경로에서는 본문의 폼 데이터를 필요한 쿼리 파라미터로 해석하지 않은 것으로 볼 수 있다.</p>
+<p>따라서 <b>메서드만 바꾸는 것이 아니라 파라미터의 위치도 바꿔야 한다.</b></p>
+<h3>9-6. 최종 요청과 해결</h3>
+<p>폼 데이터를 URL의 Query String으로 이동한 뒤 일반 사용자 세션으로 요청한다.</p>
+<pre><code>GET /admin-roles?username=wiener&amp;action=upgrade HTTP/2
+Host: LAB_HOST
+Cookie: session=WIENER_SESSION</code></pre>
+<p>GET에서 ?는 경로와 Query String을 구분하고, &amp;는 두 파라미터를 구분한다.</p>
+<p>이 요청이 관리 기능을 호출하고 wiener를 관리자로 승격해 실습 목표를 만족한다.</p>
+<h3>9-7. JavaScript fetch로 시도한 요청이 잘못된 이유</h3>
+<p>학습 도중 다음 형태의 JavaScript 호출도 시도했다.</p>
+<pre><code>fetch('/admin-roles', {
+    method: 'GET',
+    headers: {
+        'username': 'wiener',
+        'action': 'upgrade'
+    }
+});</code></pre>
+<p>이 코드는 username과 action을 HTTP 요청 헤더로 전송한다. 하지만 서버가 URL의 Query Parameter를 기대한다면 같은 이름의 커스텀 헤더는 대신 사용할 수 없다.</p>
+<p><b>Header, Query String, Body는 서로 다른 위치</b>임을 이해할 수 있었다.</p>
+<h3>9-8. 근본 원인과 대응</h3>
+<p>핵심 문제는 HTTP Method에 따라 관리자 권한 검사가 일관되게 시행되지 않는 것이다. 동일한 관리 작업이 GET 요청에서도 실행된다면 POST에만 권한 검사를 구현한 것은 충분하지 않다. 보호된 기능의 모든 실행 경로에 공통 인가 정책을 적용하고, 서버 상태를 바꾸는 작업을 GET으로 허용하지 않으며, 허용되지 않은 메서드를 명확히 거부해야 한다.</p>
+<h2>10. 참고 자료 (공식 링크)</h2>
+<ul>
+<li><a href="https://portswigger.net/web-security/access-control/lab-unprotected-admin-functionality">PortSwigger — Unprotected admin functionality</a></li>
+<li><a href="https://portswigger.net/web-security/access-control/lab-unprotected-admin-functionality-with-unpredictable-url">PortSwigger — Unprotected admin functionality with unpredictable URL</a></li>
+<li><a href="https://portswigger.net/web-security/access-control/lab-method-based-access-control-can-be-circumvented">PortSwigger — Method-based access control can be circumvented</a></li>
+</ul></div><p class="source-note">원문: <a href="https://ms-egg.tistory.com/23" target="_blank" rel="noopener noreferrer">Tistory ↗</a></p><a class="back" href="../../archive/">← 기록으로</a></article><footer><span>© 2026 Raw_Egg</span><a href="https://github.com/BackedEgg" target="_blank" rel="noopener noreferrer">GitHub ↗</a></footer></main></body></html>

@@ -1,0 +1,6 @@
+<h3>문제 설명 :</h3>
+<p>평범해 보이는 회사 소개 홈페이지이다.&nbsp;</p>
+<h3><br>목표:</h3>
+<p>배포 흔적을 추적해 서버에 남은 백업 아카이브를 찾고, 그 안의 삭제된 데이터를 복원하라 <br><br></p>
+<h3>write&nbsp;up:&nbsp;</h3>
+<p>페이지에서 누를 수 있는것들은 다 눌러봤다.&nbsp; <br>공지사항에는&nbsp;홈페이지&nbsp;서버가&nbsp;이전&nbsp;완료&nbsp;되었다는&nbsp;정보를&nbsp;찾을&nbsp;수&nbsp;있었고&nbsp;옆의&nbsp;Link란은&nbsp;클릭할&nbsp;수&nbsp;있을것&nbsp;처럼&nbsp;생겼지만&nbsp;누를&nbsp;수&nbsp;없다.&nbsp; <br>서버&nbsp;이전&nbsp;후&nbsp;외부&nbsp;링크가&nbsp;끊겨&nbsp;담당자가&nbsp;확인중이라&nbsp;한다. <br><br>개발자도구를&nbsp;열어&nbsp;코드를&nbsp;분석해보려&nbsp;했다. <br>source에&nbsp;js파일이&nbsp;있는것을&nbsp;알&nbsp;수있었다.&nbsp; <br>v2부터&nbsp;백업&nbsp;아카이브는&nbsp;빌드마다&nbsp;버전이&nbsp;붙은&nbsp;이름으로&nbsp;기록된다는것,&nbsp; <br>archiveDir&nbsp;이&nbsp;/backup/ <br>archivePattern이&nbsp;"backup_{sha}_{data}.tar.gz <br>라는것을&nbsp;알&nbsp;수&nbsp;있었는데&nbsp;tar.gz를&nbsp;보면&nbsp;압축폴더형식이라는것을&nbsp;알&nbsp;수&nbsp;있다. <br><br>다시&nbsp;홈페이지를&nbsp;보았는데&nbsp;copyright&nbsp;밑에&nbsp;build&nbsp;정보가&nbsp;눈에&nbsp;띄었다. <br>알&nbsp;수&nbsp;없는&nbsp;문자열과&nbsp;배포년월일,&nbsp;deploy.sh&nbsp;v2&nbsp;라는것을&nbsp;알&nbsp;수&nbsp;있었다. <br><br>archivedir과&nbsp;archivepattern&nbsp;에&nbsp;맞춰&nbsp;url을&nbsp;입력하니&nbsp;압축폴더가&nbsp;열렸다. <br><br>flag는&nbsp;폴더안의&nbsp;파일들에&nbsp;잘라져&nbsp;있었다. <br>붙여서&nbsp;넣으니&nbsp;해결&nbsp;할&nbsp;수&nbsp;있었다. <br><br>꼭&nbsp;network창에서&nbsp;모든&nbsp;문제의&nbsp;해결&nbsp;실마리가&nbsp;있는것은&nbsp;아니라는것을&nbsp;알게되었다.</p>

@@ -1,0 +1,13 @@
+{
+  "title": "Web - Script Context Breakout",
+  "date": "2026-10-29",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명 : 이름을 입력하면 프로필 위젯 화면에 그 이름이 JSON 형태로 표시되는 페이지이다. 목표: 위젯을 그리는 script 블록을 벗어나 코드를 실행시켜라 write up: 문제페이지에 들어…",
+  "previewTitle": "Web - Script Context Breakout",
+  "previewExcerpt": "문제설명 : 이름을 입력하면 프로필 위젯 화면에 그 이름이 JSON 형태로 표시되는 페이지이다. 목표: 위젯을 그리는 script 블록을 벗어나 코드를 실행시켜라 write up: 문제페이지에 들어…",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/26",
+  "sourceCategory": "STUDY/Write up"
+}

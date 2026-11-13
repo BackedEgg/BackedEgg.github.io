@@ -1,0 +1,45 @@
+<h3><span>(1) URL 인코딩</span></h3>
+<p><br><span>URL&nbsp;인코딩은&nbsp;인터넷&nbsp;주소에&nbsp;포함될&nbsp;수&nbsp;없는&nbsp;특수문자,&nbsp;한글,&nbsp;공백등을&nbsp;안전한&nbsp;아스키&nbsp;문자&nbsp;형태로&nbsp;변환하는&nbsp;기술이다. </span><br><span>URL에&nbsp;%&nbsp;기호와&nbsp;16진수&nbsp;숫자를&nbsp;조합하여&nbsp;표현하기&nbsp;때문에&nbsp;퍼센트&nbsp;코딩이라고도&nbsp;부른다. </span><br><br><span>URL은&nbsp;영문자,&nbsp;숫자,&nbsp;일부&nbsp;특수문자만&nbsp;사용하도록&nbsp;하는&nbsp;표준이&nbsp;있다.&nbsp;(RFC&nbsp;3986) </span><br><span>따라서&nbsp;이&nbsp;규칙을&nbsp;벗어나는&nbsp;한글,&nbsp;공백,&nbsp;또는&nbsp;URL&nbsp;구조에&nbsp;영향을&nbsp;주는&nbsp;문자를&nbsp;그대로&nbsp;주소창에&nbsp;넣으면&nbsp;컴퓨터가&nbsp;주소를&nbsp;잘못해석하거나&nbsp;오류를&nbsp;일으킬&nbsp;수도&nbsp;있다. </span><br><br><span>여기서&nbsp;주소를&nbsp;잘못해석한다는것은, </span><br><span>우선&nbsp;컴퓨터는&nbsp;웹&nbsp;주소를&nbsp;읽을때,&nbsp;특정&nbsp;문자들은&nbsp;주소의&nbsp;구조를&nbsp;파악하는&nbsp;구분자로&nbsp;정해져&nbsp;있다. </span><br><br><span>조금&nbsp;예를&nbsp;들어보자면, </span><br><span>다음은&nbsp;주소창에&nbsp;쓰이는&nbsp;특수문자들이다. </span></p>
+<pre><code>/ : 폴더를 구분
+? : 데이터의 시작을 알림
+&amp;: 데이터들을 구분함
+=: 데이터의 이름과 값을 연결</code></pre>
+<p><br><br><span>만약&nbsp;인코딩을&nbsp;하지않은&nbsp;상태에서&nbsp;구글에&nbsp;Ethernet&amp;IP라고&nbsp;검색했다면&nbsp;컴퓨터는&nbsp;Ethernet&amp;IP를&nbsp;한단어로&nbsp;인식하지못하고&nbsp;Ethernet과&nbsp;IP를&nbsp;다른&nbsp;데이터로&nbsp;구분해&nbsp;사용자가&nbsp;원하는&nbsp;검색결과를&nbsp;출력하지&nbsp;않을것이다. </span><br><br><span>따라서&nbsp;웹의&nbsp;안전성을&nbsp;위해&nbsp;URL&nbsp;인코딩은&nbsp;필수적이라고&nbsp;볼&nbsp;수&nbsp;있다. </span><br><br><span>허용되지않은 문자, 인코딩이 필요한 특수문자</span></p>
+<pre><code> :/#[]@!$&amp;'()*+,;=%공백</code></pre>
+<p><span>은 다음과 같은 변환을 거친다. </span><br><br></p>
+<pre><code>%아스키코드16진수값</code></pre>
+<p><span></span><br><br><span>공백문자를&nbsp;예로&nbsp;들어보겠다. </span></p>
+<pre><code>%공백의 16진수 아스키코드값 = %20
+(또는 +기호)</code></pre>
+<p><br><br></p>
+<p></p><figure><span><img src="image-1.png"></span><figcaption>아스키코드</figcaption>
+</figure>
+<p></p>
+<h3><span>Base64</span></h3>
+<p><br><span>Base64는&nbsp;텍스트가&nbsp;아닌&nbsp;이진&nbsp;데이터(Binary&nbsp;Data&nbsp;:&nbsp;이미지,&nbsp;압축파일,&nbsp;프로그램&nbsp;등)를&nbsp;64개의&nbsp;아스키코드로&nbsp;변환하는&nbsp;기술이다. </span><br><span>64개의&nbsp;문자에는&nbsp;알파벳&nbsp;대소문자,&nbsp;숫자(0~9),&nbsp;특수문자&nbsp;+&nbsp;/,&nbsp;패딩기호&nbsp;=&nbsp;이&nbsp;사용된다. </span><br><br><span>이메일시스템이나&nbsp;텍스트&nbsp;전송&nbsp;프로토콜은&nbsp;기본적으로&nbsp;'텍스트'를&nbsp;보내기&nbsp;위해&nbsp;만들어졌다.&nbsp;따라서&nbsp;이미지나&nbsp;실행&nbsp;파일&nbsp;같은&nbsp;이진&nbsp;데이터를&nbsp;그대로&nbsp;실어보낸다면,&nbsp;시스템이&nbsp;특정&nbsp;데이터를&nbsp;제어문자(줄바꿈,&nbsp;종료&nbsp;등)로&nbsp;오해하여&nbsp;데이터가&nbsp;깨지는&nbsp;현상이&nbsp;발생한다. </span><br><br><span>변환&nbsp;원리는&nbsp;다음과&nbsp;같다. </span></p>
+<p>&nbsp;</p>
+<p><span>(1)&nbsp;문자열을&nbsp;이진수로&nbsp;변환한뒤&nbsp;6비트씩&nbsp;끊어&nbsp;묶는다.&nbsp;(이때,&nbsp;비트의&nbsp;개수가&nbsp;6의&nbsp;배수가&nbsp;아닐경우&nbsp;0을&nbsp;추가하여&nbsp;6의&nbsp;배수로&nbsp;만든다.)</span><br><span>(2)&nbsp;6비트&nbsp;데이터를&nbsp;10진수로&nbsp;변환한다.</span><br><span>(3)&nbsp;변환한&nbsp;수를&nbsp;base64테이블에서&nbsp;해당하는&nbsp;문자를&nbsp;찾아&nbsp;치환한다.</span><br><span>(4)&nbsp;치환과정을&nbsp;거친&nbsp;뒤,&nbsp;글자의&nbsp;수가&nbsp;4의&nbsp;배수가&nbsp;되도록&nbsp;문자&nbsp;=을&nbsp;반복해&nbsp;뒤에&nbsp;추가한다.&nbsp;(&nbsp;이를&nbsp;패딩이라한다.)</span></p>
+<p><br><span>이때,&nbsp;패딩을&nbsp;사용하는&nbsp;이유: </span><br><span>만약&nbsp;ZA라는&nbsp;두&nbsp;글자를&nbsp;디코딩하게&nbsp;된다면,&nbsp;011001&nbsp;00000000&nbsp;이라는&nbsp;12개의&nbsp;비트&nbsp;나열로&nbsp;바뀌게&nbsp;되고,&nbsp;이를&nbsp;앞에서&nbsp;8개씩&nbsp;끊어&nbsp;읽으면&nbsp;아스키문자&nbsp;d(01100100&nbsp;이후&nbsp;0000이&nbsp;남게&nbsp;된다.&nbsp;이&nbsp;경우&nbsp;디코딩을&nbsp;하는&nbsp;입장에서는&nbsp;의문을&nbsp;가질수밖에&nbsp;없다.&nbsp;따라서&nbsp;패딩을&nbsp;이용해준다. </span></p>
+<p></p><figure><span><img src="image-2.png"></span><figcaption>base64테이블</figcaption>
+</figure>
+<p></p>
+<p><br><br><span>문자열&nbsp;Man&nbsp;을&nbsp;base64&nbsp;인코딩&nbsp;해보자. </span><br><span>Man은&nbsp;M,a,n&nbsp;총&nbsp;3글자(3바이트)이다.&nbsp;컴퓨터는&nbsp;이를&nbsp;아스키코드&nbsp;숫자로&nbsp;인식하고&nbsp;다시&nbsp;8비트의&nbsp;이진수로&nbsp;바꿀&nbsp;것이다. </span><br><br></p>
+<pre><code>(1) M -&gt; 아스키코드 77 -&gt; 01001101
+(2) a -&gt; 아스키코드 97 -&gt; 01100001
+(3) n -&gt; 아스키코드 110 -&gt; 01101110
+
+010011010110000101101110</code></pre>
+<p><span></span><br><br><span>6비트로 쪼갠 후 10진수 숫자로 바꾸자.</span></p>
+<pre><code>010011 -&gt; 19
+010110 -&gt; 22
+000101 -&gt; 5
+101110 -&gt; 46</code></pre>
+<p><br><span>base64&nbsp;테이블의&nbsp;문자로&nbsp;치환하자 </span></p>
+<pre><code>19 -&gt; T
+22 -&gt; W
+5 -&gt; F
+46 -&gt; u</code></pre>
+<p><br><br><span>TWFu&nbsp;라는&nbsp;결과가&nbsp;나온다.</span></p>
+<p>&nbsp;</p>
+<p><span>지금은 문자열을 바꾼거라 굳이? 싶지만 Binary 데이터에는 특수문자들이나 공백들이 있기 때문에 이야기가 달라진다.</span><br><br><br><span>오늘은&nbsp;URL인코딩과&nbsp;base64인코딩에&nbsp;대해&nbsp;알아보았다.</span></p>
+<p><span>두&nbsp;기술&nbsp;모두&nbsp;인터넷&nbsp;환경에서&nbsp;데이터가&nbsp;깨지는&nbsp;것을&nbsp;막기&nbsp;위한&nbsp;기술인것같다. </span><br><br><span>처음&nbsp;배워보는거라&nbsp;솔직히&nbsp;한번에&nbsp;이해못했고&nbsp;블로그로&nbsp;정리하면서&nbsp;이해했다. </span><br><span>컴퓨터는&nbsp;생긴것만큼이나&nbsp;복잡한것&nbsp;같다. </span><br><span>뭔가&nbsp;지식을&nbsp;더&nbsp;얻은것&nbsp;같아서&nbsp;기분이&nbsp;좋다.</span></p>

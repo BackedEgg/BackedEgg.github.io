@@ -1,0 +1,13 @@
+{
+  "title": "Web - Reset Link",
+  "date": "2026-10-10",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명 : 비밀번호를 잊었을 때 이메일로 재설정 링크를 요청할 수 있는 입점 상가 포털이다 (데모 환경이라 실제메일은 발송되지 않고 화면에 링크가 바로 표시된다.) 목표: 메일함에 접근하지 않고 …",
+  "previewTitle": "Web - Reset Link",
+  "previewExcerpt": "문제설명 : 비밀번호를 잊었을 때 이메일로 재설정 링크를 요청할 수 있는 입점 상가 포털이다 (데모 환경이라 실제메일은 발송되지 않고 화면에 링크가 바로 표시된다.) 목표: 메일함에 접근하지 않고 …",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/13",
+  "sourceCategory": "STUDY/Write up"
+}

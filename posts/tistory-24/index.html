@@ -1,0 +1,1501 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Raw_Egg의 개발·보안 학습 기록"><meta name="theme-color" content="#fff9ed"><title>LTE 터널링을 위한 여정(4) 네트워크 통신 과정과 계층별 헤더분석 · Raw_Egg</title><link rel="stylesheet" href="../../style.css"><link rel="stylesheet" href="../../egg-extra.css"><script src="../../app.js" defer></script></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><aside class="rail"><a class="logo" href="../../" aria-label="Raw_Egg 홈"><span class="logo-shape"><i></i></span><span>Raw_Egg<span class="period">.</span></span></a><nav class="rail-nav" aria-label="주 메뉴"><a  href="../../">Home</a><a aria-current="page" href="../../archive/">Records</a><a  href="../../categories/">Categories</a><a  href="../../about/">About</a></nav><div class="rail-bottom"><span>make me baked<span class="period">.</span></span><button class="theme" type="button" aria-label="색상 모드 전환">◐ <span>Dark</span></button></div></aside><header class="mobile-head"><a href="../../">🥚 Raw_Egg.</a><button class="menu" type="button" aria-expanded="false" aria-label="메뉴 열기">☰</button></header><main id="main" class="main"><article class="article"><a class="back" href="../../archive/">← 기록으로</a><header class="article-head"><span class="kicker">2026-10-16 · RECORD</span><h1>LTE 터널링을 위한 여정(4) 네트워크 통신 과정과 계층별 헤더분석</h1><p>원래는 netfilter을 활용해 패킷변조를 하려고 했으나 통신과 각계층의 헤더들에 대한 이해가 선행되어야겠다고 판단했다. 1. 네트워크 통신에 대하여: 네트워크 통신은 단순히 한 컴퓨터에서 다른 …</p></header><div class="article-body"><p>원래는 netfilter을 활용해 패킷변조를 하려고 했으나 통신과 각계층의 헤더들에 대한 이해가 선행되어야겠다고 판단했다.</p>
+<p>&nbsp;</p>
+<h3><span>1. 네트워크 통신에 대하여:</span></h3>
+<p><span>네트워크 통신은 단순히 한 컴퓨터에서 다른 컴퓨터로 데이터를 전달하는 과정이라고 볼 수 없다.</span></p>
+<p><span>데이터가 목적지에 도달하기 위해서는 여러 프로토콜이 이용된다. 각 프로토콜은 자신이 담당하는 역할에 따라 데이터에 헤더(Header)를 추가하며, 수신 측은 해당 헤더를 분석해 데이터를 처리한다.</span></p>
+<p><span>예를 들어 웹 브라우저에서 웹사이트에 접속하면 다음과 같은 과정이 진행될 수 있다.</span></p>
+<ol>
+<li><span>DNS를 이용해 도메인 이름에 해당하는 IP 주소를 확인한다.</span></li>
+<li><span>라우팅 테이블을 확인해 데이터를 전달할 경로를 결정한다.</span></li>
+<li><span>필요한 경우 ARP를 이용해 다음 홉의 MAC 주소를 확인한다.</span></li>
+<li><span>Ethernet 프레임을 생성해 네트워크로 전송한다.</span></li>
+<li><span>라우터들이 IP 헤더를 확인해 패킷을 목적지 방향으로 전달한다.</span></li>
+<li><span>TCP를 사용하는 경우 연결을 설정한다.</span></li>
+<li><span>HTTPS에서는 TLS를 통해 암호화 통신을 준비한다.</span></li>
+<li><span>애플리케이션 데이터를 주고받는다.</span></li>
+<li><span>통신이 끝나면 연결을 종료하거나 재사용한다.</span></li>
+</ol>
+<p><span>이 글에서는 이러한 통신 과정을 이해하기 위해 다음 프로토콜을 분석한다.</span></p>
+<table>
+<tbody>
+<tr>
+<td><span>Ethernet</span></td>
+<td><span>같은 링크에서 프레임 전달</span></td>
+</tr>
+<tr>
+<td><span>ARP</span></td>
+<td><span>IPv4 주소에 대응하는 MAC 주소 확인</span></td>
+</tr>
+<tr>
+<td><span>IPv4</span></td>
+<td><span>32비트 IP 주소 기반의 패킷 전달 및 라우팅</span></td>
+</tr>
+<tr>
+<td><span>IPv6</span></td>
+<td><span>128비트 주소 기반의 패킷 전달 및 라우팅</span></td>
+</tr>
+<tr>
+<td><span>TCP</span></td>
+<td><span>신뢰성 있는 바이트 스트림 제공</span></td>
+</tr>
+<tr>
+<td><span>UDP</span></td>
+<td><span>비연결형 데이터그램 전달</span></td>
+</tr>
+<tr>
+<td><span>ICMP</span></td>
+<td><span>네트워크 오류 전달 및 상태 진단</span></td>
+</tr>
+</tbody>
+</table>
+<div><hr></div>
+<h2><span>2. 네트워크 통신의 기본 구조</span></h2>
+<h3><span>2.1 OSI 7계층과 TCP/IP 모델</span></h3>
+<p><span>네트워크 통신을 이해하려면 먼저 프로토콜이 계층별로 구분된다는 사실을 알아야 한다.</span></p>
+<p><span>OSI 7계층은 네트워크 기능을 일곱 단계로 나눈 개념적 참조 모델이다.</span></p>
+<table>
+<tbody>
+<tr>
+<td><span>7</span></td>
+<td><span>Application</span></td>
+<td><span>애플리케이션 서비스 제공</span></td>
+<td><span>HTTP, DNS</span></td>
+</tr>
+<tr>
+<td><span>6</span></td>
+<td><span>Presentation</span></td>
+<td><span>데이터 표현, 인코딩, 암호화 등</span></td>
+<td><span>TLS 관련 기능</span></td>
+</tr>
+<tr>
+<td><span>5</span></td>
+<td><span>Session</span></td>
+<td><span>통신 세션 관리</span></td>
+<td><span>세션 관리 기능</span></td>
+</tr>
+<tr>
+<td><span>4</span></td>
+<td><span>Transport</span></td>
+<td><span>프로세스 간 데이터 전달</span></td>
+<td><span>TCP, UDP</span></td>
+</tr>
+<tr>
+<td><span>3</span></td>
+<td><span>Network</span></td>
+<td><span>논리 주소 및 라우팅</span></td>
+<td><span>IPv4, IPv6, ICMP</span></td>
+</tr>
+<tr>
+<td><span>2</span></td>
+<td><span>Data Link</span></td>
+<td><span>링크 내 프레임 전달</span></td>
+<td><span>Ethernet, Wi-Fi</span></td>
+</tr>
+<tr>
+<td><span>1</span></td>
+<td><span>Physical</span></td>
+<td><span>물리적 신호 전송</span></td>
+<td><span>케이블, 광신호, 전파</span></td>
+</tr>
+</tbody>
+</table>
+<p>&nbsp;</p>
+<p><span>실제 인터넷에서는 TCP/IP 프로토콜 모델을 중심으로 통신한다.</span></p>
+<p><span>OSI 계층은 기능을 설명하기 위한 모델이며, 실제 프로토콜이 항상 한 계층에만 완벽하게 대응하는 것은 아니다.</span></p>
+<h3><span>2.2 캡슐화(Encapsulation)</span></h3>
+<p><b><span>캡슐화란 상위 계층에서 전달받은 데이터에 하위 계층의 헤더를 추가하는 과정이다.</span></b></p>
+<p><span>예를 들어 애플리케이션이 </span><span>Hello</span><span>라는 데이터를 TCP로 전송한다고 가정하자.</span></p>
+<p><span>데이터는 다음과 같이 구성된다.</span></p>
+<pre><code>[Application Data]
+       Hello
+
+        ↓ TCP 헤더 추가
+
+[TCP Header][Hello]
+
+        ↓ IP 헤더 추가
+
+[IP Header][TCP Header][Hello]
+
+        ↓ Ethernet 헤더 추가
+
+[Ethernet Header][IP Header][TCP Header][Hello]</code></pre>
+<p><span>각 프로토콜이 자신의 역할에 필요한 정보를 헤더에 추가한다.</span></p>
+<p><b><span>Ethernet Header</span></b></p>
+<ul>
+<li><span>출발지 MAC 주소</span></li>
+<li><span>목적지 MAC 주소</span></li>
+<li><span>상위 프로토콜 식별 정보</span></li>
+</ul>
+<p><b><span>IP Header</span></b></p>
+<ul>
+<li><span>출발지 IP 주소</span></li>
+<li><span>목적지 IP 주소</span></li>
+<li><span>패킷 전달에 필요한 제어 정보</span></li>
+</ul>
+<p><b><span>TCP Header</span></b></p>
+<ul>
+<li><span>출발지 포트</span></li>
+<li><span>목적지 포트</span></li>
+<li><span>Sequence Number</span></li>
+<li><span>Acknowledgment Number</span></li>
+<li><span>TCP Flags</span></li>
+</ul>
+<p><b><span>Application Data</span></b></p>
+<ul>
+<li><span>실제 애플리케이션이 주고받는 데이터</span></li>
+</ul>
+<p><span>Ethernet을 사용하는 네트워크에서는 이렇게 구성된 데이터가 Ethernet 프레임 형태로 전달된다.</span></p>
+<p><span>실제 Ethernet 프레임에는 필요한 경우 Padding과 오류 검출을 위한 FCS도 포함된다.</span></p>
+<h3><span>2.3 역캡슐화(Decapsulation)</span></h3>
+<p><b><span>역캡슐화는 수신 측이 헤더를 순서대로 해석하면서 상위 계층에 데이터를 전달하는 과정이다.</span></b></p>
+<p><span>일반적인 Ethernet/IPv4/TCP 통신에서는 다음과 같은 논리적 순서로 진행된다.</span></p>
+<pre><code>Ethernet Frame 수신
+        ↓
+Ethernet Header 확인
+        ↓
+IPv4 Header 확인
+        ↓
+TCP Header 확인
+        ↓
+Application Data 전달</code></pre>
+<p><span>각 계층은 헤더에 기록된 정보를 이용해 다음 처리 단계를 결정한다.</span></p>
+<p><span>예를 들어 Ethernet의 EtherType이 </span><span>0x0800</span><span>이면 IPv4 패킷으로 해석할 수 있다.</span></p>
+<p><span>IPv4의 Protocol 값이 </span><span>6</span><span>이면 상위 프로토콜이 TCP임을 알 수 있다.</span></p>
+<p><span>TCP의 Destination Port가 </span><span>443</span><span>이면 해당 포트에 연결된 소켓을 찾는 데 사용된다.</span></p>
+<p><span>단, 443번 포트라는 이유만으로 반드시 HTTPS 서비스가 동작한다고 단정할 수는 없다.</span></p>
+<h3><span>2.4 Frame, Packet, Segment, Datagram</span></h3>
+<p><span>네트워크에서 전달되는 데이터를 계층에 따라 서로 다른 용어로 부른다.</span></p>
+<p>용어계층 또는 프로토콜의미</p>
+<table>
+<tbody>
+<tr>
+<td><span>Frame</span></td>
+<td><span>데이터링크 계층</span></td>
+<td><span>링크를 통해 전달되는 데이터 단위</span></td>
+</tr>
+<tr>
+<td><span>Packet</span></td>
+<td><span>네트워크 계층</span></td>
+<td><span>IP 헤더를 포함하는 데이터 단위</span></td>
+</tr>
+<tr>
+<td><span>Segment</span></td>
+<td><span>TCP</span></td>
+<td><span>TCP 헤더를 포함하는 데이터 단위</span></td>
+</tr>
+<tr>
+<td><span>Datagram</span></td>
+<td><span>UDP, IP 등</span></td>
+<td><span>독립적인 데이터 전달 단위</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>일상적으로 이 모두를 패킷이라고 부르기도 한다.</span></p>
+<div><hr></div>
+<h1><span>3. Ethernet Header</span></h1>
+<h2><span>3.1 Ethernet이란?</span></h2>
+<p><span>Ethernet은 주로 유선 LAN에서 사용되는 데이터링크 기술이다.</span></p>
+<p><span>Ethernet의 핵심 역할은 </span><b><span>동일한 링크에서 프레임을 어느 장비로 전달할지 식별하고 전달하는 것</span></b><span>이다.</span></p>
+<p><span>이를 위해 MAC 주소를 사용한다.</span></p>
+<p><span>MAC 주소는 Ethernet 인터페이스를 식별하는 링크 계층 주소이며, 일반적인 Ethernet MAC 주소의 크기는 48비트(6바이트)이다.</span></p>
+<p>&nbsp;</p>
+<pre><code>02:00:00:00:00:10</code></pre>
+<p><span>MAC 주소를 이해할 때 중요한 것은 IP 주소와의 차이이다.</span></p>
+<ul>
+<li><span>MAC 주소: 현재 링크에서 프레임 전달에 사용</span></li>
+<li><span>IP 주소: 네트워크를 가로질러 목적지를 식별하고 경로를 결정하는 데 사용</span></li>
+</ul>
+<h2><span>3.2 Ethernet II 헤더 구조</span></h2>
+<p><span>일반적인 Ethernet II 헤더는 14바이트이다.</span></p>
+<pre><code>+------------------------+
+| Destination MAC (6B)   |
++------------------------+
+| Source MAC      (6B)   |
++------------------------+
+| EtherType       (2B)   |
++------------------------+
+| Payload                |
++------------------------+
+| FCS             (4B)   |
++------------------------+</code></pre>
+<p><span>FCS는 헤더가 아닌 프레임의 마지막 부분에 위치한다.</span></p>
+<h3><span>필드별 설명</span></h3>
+<p>필드크기역할</p>
+<table>
+<tbody>
+<tr>
+<td><span>Destination MAC</span></td>
+<td><span>6B</span></td>
+<td><span>프레임을 전달할 대상 MAC 주소</span></td>
+</tr>
+<tr>
+<td><span>Source MAC</span></td>
+<td><span>6B</span></td>
+<td><span>프레임 송신 인터페이스의 MAC 주소</span></td>
+</tr>
+<tr>
+<td><span>EtherType</span></td>
+<td><span>2B</span></td>
+<td><span>페이로드에 포함된 프로토콜 식별</span></td>
+</tr>
+</tbody>
+</table>
+<p><b><span>Destination MAC</span></b></p>
+<p><span>현재 Ethernet 링크에서 프레임을 전달할 대상이다.</span></p>
+<p><span>같은 LAN의 다른 컴퓨터로 전송한다면 해당 컴퓨터의 MAC 주소가 사용될 수 있다.</span></p>
+<p><span>다른 네트워크로 전달한다면 일반적으로 다음 홉인 게이트웨이의 MAC 주소가 사용된다.</span></p>
+<p><b><span>Source MAC</span></b></p>
+<p><span>해당 Ethernet 프레임을 전송하는 인터페이스의 MAC 주소이다.</span></p>
+<p><b><span>EtherType</span></b></p>
+<p><span>Ethernet 헤더 뒤에 어떤 프로토콜 데이터가 들어 있는지 나타낸다.</span></p>
+<p>EtherType의미</p>
+<table>
+<tbody>
+<tr>
+<td><span>0x0800</span></td>
+<td><span>IPv4</span></td>
+</tr>
+<tr>
+<td><span>0x0806</span></td>
+<td><span>ARP</span></td>
+</tr>
+<tr>
+<td><span>0x86DD</span></td>
+<td><span>IPv6</span></td>
+</tr>
+<tr>
+<td><span>0x8100</span></td>
+<td><span>IEEE 802.1Q VLAN 태그</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>예를 들어 EtherType 값이 </span><span>0x0800</span><span>이면 Ethernet 페이로드를 IPv4 패킷으로 처리할 수 있다.</span></p>
+<h2><span>3.3 Ethernet 프레임의 크기</span></h2>
+<p><span>일반적인 Ethernet II 프레임은 VLAN 태그가 없을 때 다음과 같은 크기 규칙을 가진다.</span></p>
+<p>구성크기</p>
+<table>
+<tbody>
+<tr>
+<td><span>Ethernet Header</span></td>
+<td><span>14B</span></td>
+</tr>
+<tr>
+<td><span>Payload</span></td>
+<td><span>일반적으로 46~1500B</span></td>
+</tr>
+<tr>
+<td><span>FCS</span></td>
+<td><span>4B</span></td>
+</tr>
+<tr>
+<td><span>전체 프레임</span></td>
+<td><span>일반적으로 64~1518B</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>위 크기는 표준적인 기본 Ethernet 프레임을 기준으로 한 값이다. VLAN 태그나 Jumbo Frame 등을 사용하면 달라진다.</span></p>
+<p><span>Payload가 너무 짧으면 최소 프레임 크기를 만족시키기 위해 Padding을 추가할 수 있다.</span></p>
+<p><span>FCS(Frame Check Sequence)는 전송 과정에서 발생한 비트 오류를 검출하는 데 사용된다.</span></p>
+<p>&nbsp;</p>
+<h2><span>3.4 라우터를 통과하면 MAC 주소는 어떻게 될까?</span></h2>
+<p><span>다음 통신을 가정하자.</span></p>
+<pre><code>PC A
+IP: 192.168.1.10
+    |
+    v
+Gateway
+IP: 192.168.1.1
+    |
+    v
+Internet
+    |
+    v
+Server
+IP: 203.0.113.20</code></pre>
+<p><span>PC A가 서버에 데이터를 보낼 때 첫 번째 Ethernet 프레임의 목적지 MAC은 일반적으로 게이트웨이의 MAC이다.</span></p>
+<p><span>라우터는 해당 프레임을 수신한 뒤 IP 패킷을 확인하고 다음 경로를 결정한다.</span></p>
+<p><span>이후 다음 링크에 맞는 새로운 데이터링크 헤더를 구성한다.</span></p>
+<p><span>즉, 일반적인 Ethernet 기반 라우팅에서는 다음과 같은 현상이 발생한다.</span></p>
+<p>구분PC → GatewayGateway → 다음 홉</p>
+<table>
+<tbody>
+<tr>
+<td><span>Source MAC</span></td>
+<td><span>PC MAC</span></td>
+<td><span>Gateway 출력 인터페이스 MAC</span></td>
+</tr>
+<tr>
+<td><span>Destination MAC</span></td>
+<td><span>Gateway MAC</span></td>
+<td><span>다음 홉 MAC</span></td>
+</tr>
+<tr>
+<td><span>Source IP</span></td>
+<td><span>PC IP</span></td>
+<td><span>PC IP</span></td>
+</tr>
+<tr>
+<td><span>Destination IP</span></td>
+<td><span>Server IP</span></td>
+<td><span>Server IP</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>이 예시는 NAT가 적용되지 않는 경우이다.</span></p>
+<p><b><span>핵심: MAC 주소는 링크마다 변경될 수 있지만, IP 주소는 일반적인 라우팅 과정에서 유지된다.</span></b></p>
+<p><span>다만 NAT가 수행되면 IP 주소도 변경될 수 있다.</span></p>
+<div><hr></div>
+<h1><span>4. ARP Header</span></h1>
+<h2><span>4.1 ARP란?</span></h2>
+<p><span>ARP(Address Resolution Protocol)는 IPv4 주소에 대응하는 링크 계층 주소를 알아내기 위한 프로토콜이다.</span></p>
+<p><span>일반적인 Ethernet 환경에서는 IPv4 주소에 대응하는 MAC 주소를 확인할 때 사용한다.</span></p>
+<p><span>예를 들어 다음과 같은 상황을 생각해 보자.</span></p>
+<pre><code>PC IP       : 192.168.1.10
+Gateway IP  : 192.168.1.1
+Gateway MAC : 알 수 없음</code></pre>
+<p><span>PC는 게이트웨이의 IP 주소를 알고 있지만 MAC 주소를 모른다.</span></p>
+<p><span>Ethernet 프레임을 만들려면 목적지 MAC 주소가 필요하므로 이를 알아내야 한다.</span></p>
+<p><span>이때 ARP를 사용할 수 있다.</span></p>
+<h2><span>4.2 ARP 동작 과정</span></h2>
+<h3><span>① ARP Request</span></h3>
+<p><span>PC는 같은 네트워크에 ARP Request를 전송한다.</span></p>
+<p><span>의미는 다음과 같다.</span></p>
+<blockquote>
+<p><span>192.168.1.1이라는 IP 주소를 사용하는 장비는 자신의 MAC 주소를 알려주세요.</span></p>
+</blockquote>
+<p><span>일반적인 ARP Request는 Ethernet 브로드캐스트 주소를 사용한다.</span></p>
+<pre><code>ff:ff:ff:ff:ff:ff</code></pre>
+<p><span>따라서 같은 브로드캐스트 도메인의 장비들이 요청을 수신할 수 있다.</span></p>
+<h3><span>② ARP Reply</span></h3>
+<p><span>해당 IP를 사용하는 장비가 ARP Reply를 전송한다.</span></p>
+<p><span>예:</span></p>
+<pre><code>192.168.1.1의 MAC 주소는
+02:00:00:00:00:01입니다.</code></pre>
+<p><span>일반적인 ARP Reply는 요청한 장비를 대상으로 유니캐스트 전송된다.</span></p>
+<h3><span>③ ARP 캐시 저장</span></h3>
+<p><span>PC는 알아낸 IP-MAC 주소 대응 관계를 이웃 캐시에 저장한다.</span></p>
+<pre><code>192.168.1.1
+    ↕
+02:00:00:00:00:01</code></pre>
+<p><span>이후 일정 시간 동안 같은 주소를 사용할 경우 저장된 정보를 활용할 수 있다.</span></p>
+<p><span>ARP 캐시가 존재한다고 해서 매번 ARP 요청이 발생하는 것은 아니다.</span></p>
+<h2><span>4.3 ARP 헤더 구조</span></h2>
+<p><span>Ethernet과 IPv4에서 사용하는 일반적인 ARP 메시지의 크기는 28바이트이다.</span></p>
+<p>필드크기역할</p>
+<table>
+<tbody>
+<tr>
+<td><span>Hardware Type</span></td>
+<td><span>2B</span></td>
+<td><span>하드웨어 주소 유형</span></td>
+</tr>
+<tr>
+<td><span>Protocol Type</span></td>
+<td><span>2B</span></td>
+<td><span>프로토콜 주소 유형</span></td>
+</tr>
+<tr>
+<td><span>Hardware Size</span></td>
+<td><span>1B</span></td>
+<td><span>하드웨어 주소 길이</span></td>
+</tr>
+<tr>
+<td><span>Protocol Size</span></td>
+<td><span>1B</span></td>
+<td><span>프로토콜 주소 길이</span></td>
+</tr>
+<tr>
+<td><span>Opcode</span></td>
+<td><span>2B</span></td>
+<td><span>요청 또는 응답 종류</span></td>
+</tr>
+<tr>
+<td><span>Sender MAC</span></td>
+<td><span>6B</span></td>
+<td><span>송신자 MAC</span></td>
+</tr>
+<tr>
+<td><span>Sender IP</span></td>
+<td><span>4B</span></td>
+<td><span>송신자 IPv4</span></td>
+</tr>
+<tr>
+<td><span>Target MAC</span></td>
+<td><span>6B</span></td>
+<td><span>대상 MAC</span></td>
+</tr>
+<tr>
+<td><span>Target IP</span></td>
+<td><span>4B</span></td>
+<td><span>대상 IPv4</span></td>
+</tr>
+</tbody>
+</table>
+<p>&nbsp;</p>
+<p>필드값의 의미</p>
+<table>
+<tbody>
+<tr>
+<td><span>Hardware Type</span></td>
+<td><span>1</span></td>
+<td><span>Ethernet</span></td>
+</tr>
+<tr>
+<td><span>Protocol Type</span></td>
+<td><span>0x0800</span></td>
+<td><span>IPv4</span></td>
+</tr>
+<tr>
+<td><span>Opcode</span></td>
+<td><span>1</span></td>
+<td><span>ARP Request</span></td>
+</tr>
+<tr>
+<td><span>Opcode</span></td>
+<td><span>2</span></td>
+<td><span>ARP Reply</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>일반적인 ARP Request는 대상 MAC을 아직 모르기 때문에 Target Hardware Address를 0으로 채울 수 있다.</span></p>
+<p><span>여기서 주의할 점은 Ethernet 헤더의 Destination MAC과 ARP 메시지 내부의 Target MAC이 서로 다른 필드라는 것이다.</span></p>
+<h2><span>4.4 ARP와 보안</span></h2>
+<p><span>ARP는 기본적으로 강력한 송신자 인증 기능을 제공하지 않는다.</span></p>
+<p><span>따라서 공격자가 허위 ARP 응답을 보내 잘못된 IP-MAC 대응 관계를 만들면 트래픽이 의도하지 않은 장비로 전달될 수 있다.</span></p>
+<p><span>이러한 공격을 ARP Spoofing 또는 ARP Poisoning이라고 부른다.</span></p>
+<p><span>ARP Spoofing은 중간자 공격(Man-in-the-Middle)의 한 수단으로 악용될 수 있다.</span></p>
+<p><b><span>참고:</span></b><span> IPv6에서는 일반적으로 ARP 대신 ICMPv6 기반 Neighbor Discovery Protocol(NDP)을 사용한다.</span></p>
+<div><hr></div>
+<h1><span>5. IPv4 Header</span></h1>
+<h2><span>5.1 IPv4란?</span></h2>
+<p><span>IPv4(Internet Protocol version 4)는 IP 주소를 기반으로 패킷을 네트워크 간에 전달하는 프로토콜이다.</span></p>
+<p><span>IPv4 주소의 크기는 32비트이다.</span></p>
+<pre><code>192.168.1.10</code></pre>
+<p><span>IPv4는 연결 설정 없이 패킷을 독립적으로 전달하는 비연결형 프로토콜이다.</span></p>
+<p><span>또한 Best-Effort 방식으로 동작한다.</span></p>
+<p><span>즉, IP 자체는 다음을 보장하지 않는다.</span></p>
+<ul>
+<li><span>패킷이 반드시 목적지에 도착하는 것</span></li>
+<li><span>패킷이 순서대로 도착하는 것</span></li>
+<li><span>패킷이 중복되지 않는 것</span></li>
+<li><span>손실된 패킷을 자동으로 재전송하는 것</span></li>
+</ul>
+<p><span>이러한 기능이 필요하다면 TCP나 다른 상위 프로토콜이 이를 제공해야 한다.</span></p>
+<h2><span>5.2 IPv4 헤더 구조</span></h2>
+<p><span>IPv4 기본 헤더의 길이는 20바이트이며, Options를 포함하면 최대 60바이트까지 확장할 수 있다.</span></p>
+<pre><code>+--------+--------+----------------+
+|Version |  IHL   | DSCP/ECN       |
++--------+--------+----------------+
+|           Total Length           |
++----------------------------------+
+|          Identification          |
++--------+-------------------------+
+| Flags  |     Fragment Offset     |
++--------+--------+----------------+
+|  TTL   |Protocol| Header Checksum|
++--------+--------+----------------+
+|        Source IP Address         |
++----------------------------------+
+|      Destination IP Address      |
++----------------------------------+
+|         Options (Optional)       |
++----------------------------------+</code></pre>
+<p><span>위 그림은 필드를 이해하기 위한 개념도이며, 실제 헤더의 정확한 비트 배치는 아래 표의 크기를 기준으로 이해하면 된다.</span></p>
+<h2><span>5.3 IPv4 필드별 설명</span></h2>
+<table>
+<tbody>
+<tr>
+<td><span>Version</span></td>
+<td><span>4bit</span></td>
+<td><span>IP 버전</span></td>
+</tr>
+<tr>
+<td><span>IHL</span></td>
+<td><span>4bit</span></td>
+<td><span>IP 헤더 길이</span></td>
+</tr>
+<tr>
+<td><span>DSCP</span></td>
+<td><span>6bit</span></td>
+<td><span>트래픽 서비스 분류</span></td>
+</tr>
+<tr>
+<td><span>ECN</span></td>
+<td><span>2bit</span></td>
+<td><span>네트워크 혼잡 신호</span></td>
+</tr>
+<tr>
+<td><span>Total Length</span></td>
+<td><span>16bit</span></td>
+<td><span>IPv4 패킷 전체 길이</span></td>
+</tr>
+<tr>
+<td><span>Identification</span></td>
+<td><span>16bit</span></td>
+<td><span>단편화된 패킷 식별에 사용</span></td>
+</tr>
+<tr>
+<td><span>Flags</span></td>
+<td><span>3bit</span></td>
+<td><span>단편화 제어</span></td>
+</tr>
+<tr>
+<td><span>Fragment Offset</span></td>
+<td><span>13bit</span></td>
+<td><span>단편의 위치</span></td>
+</tr>
+<tr>
+<td><span>TTL</span></td>
+<td><span>8bit</span></td>
+<td><span>패킷 전달 홉 제한</span></td>
+</tr>
+<tr>
+<td><span>Protocol</span></td>
+<td><span>8bit</span></td>
+<td><span>상위 프로토콜 식별</span></td>
+</tr>
+<tr>
+<td><span>Header Checksum</span></td>
+<td><span>16bit</span></td>
+<td><span>IPv4 헤더 오류 검출</span></td>
+</tr>
+<tr>
+<td><span>Source IP</span></td>
+<td><span>32bit</span></td>
+<td><span>출발지 주소</span></td>
+</tr>
+<tr>
+<td><span>Destination IP</span></td>
+<td><span>32bit</span></td>
+<td><span>목적지 주소</span></td>
+</tr>
+<tr>
+<td><span>Options</span></td>
+<td><span>가변</span></td>
+<td><span>추가적인 제어 정보</span></td>
+</tr>
+</tbody>
+</table>
+<h3><span>Version</span></h3>
+<p><span>현재 IP 프로토콜의 버전을 나타낸다.</span></p>
+<p><span>IPv4라면 값은 4이다.</span></p>
+<h3><span>IHL(Internet Header Length)</span></h3>
+<p><span>IPv4 헤더의 길이를 나타낸다.</span></p>
+<p><span>IHL은 4바이트 단위로 계산한다.</span></p>
+<p><span>예:</span></p>
+<p>IHL 값헤더 길이</p>
+<table>
+<tbody>
+<tr>
+<td><span>5</span></td>
+<td><span>20바이트</span></td>
+</tr>
+<tr>
+<td><span>6</span></td>
+<td><span>24바이트</span></td>
+</tr>
+<tr>
+<td><span>10</span></td>
+<td><span>40바이트</span></td>
+</tr>
+<tr>
+<td><span>15</span></td>
+<td><span>60바이트</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>수신 측은 이 값을 통해 IP 헤더가 어디에서 끝나는지 알 수 있다.</span></p>
+<p><span>그 뒤에는 TCP, UDP, ICMP 등의 데이터가 위치할 수 있다.</span></p>
+<h3><span>DSCP와 ECN</span></h3>
+<p><span>DSCP(Differentiated Services Code Point)는 트래픽에 대한 서비스 분류 정보를 제공한다.</span></p>
+<p><span>예를 들어 음성 통신과 일반적인 파일 전송을 서로 다르게 처리하는 QoS 정책에 활용할 수 있다.</span></p>
+<p><span>ECN(Explicit Congestion Notification)은 지원하는 장비와 프로토콜 사이에서 혼잡 상태를 표시하는 데 사용된다.</span></p>
+<h3><span>Total Length</span></h3>
+<p><span>IP 헤더와 IP 페이로드를 포함한 전체 IPv4 데이터그램의 길이이다.</span></p>
+<p><span>예를 들어 다음 패킷이 있다고 가정하자.</span></p>
+<pre><code>IPv4 Header : 20 bytes
+UDP Header  :  8 bytes
+Data        : 12 bytes</code></pre>
+<p><span>이 경우:</span></p>
+<pre><code>Total Length = 40 bytes</code></pre>
+<p><span>이 값에 Ethernet 헤더 길이는 포함되지 않는다.</span></p>
+<h3><span>Identification</span></h3>
+<p><span>IPv4 단편화 과정에서 같은 원본 데이터그램에서 생성된 단편을 식별하는 데 사용된다.</span></p>
+<h3><span>Flags</span></h3>
+<p><span>IPv4 단편화를 제어하는 필드이다.</span></p>
+<p>Flag의미</p>
+<table>
+<tbody>
+<tr>
+<td><span>Reserved</span></td>
+<td><span>예약 비트</span></td>
+</tr>
+<tr>
+<td><span>DF</span></td>
+<td><span>Don't Fragment, 단편화 금지</span></td>
+</tr>
+<tr>
+<td><span>MF</span></td>
+<td><span>More Fragments, 뒤에 단편이 더 있음</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>DF가 설정된 패킷은 경로에서 일반적인 IPv4 단편화를 수행할 수 없다.</span></p>
+<h3><span>Fragment Offset</span></h3>
+<p><span>단편이 원래 IP 데이터그램의 어느 위치에 해당하는지를 나타낸다.</span></p>
+<p><span>8바이트 단위로 표현한다.</span></p>
+<h3><span>TTL(Time To Live)</span></h3>
+<p><span>패킷이 네트워크에서 무한히 순환하지 않도록 제한하는 필드이다.</span></p>
+<p><span>일반적으로 IPv4 라우터는 패킷을 전달할 때 TTL을 1 감소시킨다.</span></p>
+<pre><code>출발지   TTL = 64
+   ↓
+Router 1 TTL = 63
+   ↓
+Router 2 TTL = 62
+   ↓
+목적지   TTL = 62</code></pre>
+<p><span>TTL이 소진되면 패킷은 폐기된다.</span></p>
+<p><span>이때 조건이 허용된다면 라우터는 ICMP Time Exceeded 메시지를 전송할 수 있다.</span></p>
+<p><span>Traceroute는 이러한 원리를 활용한다.</span></p>
+<h3><span>Protocol</span></h3>
+<p><span>IP 헤더 다음에 어떤 프로토콜이 위치하는지 알려준다.</span></p>
+<p>값프로토콜</p>
+<table>
+<tbody>
+<tr>
+<td><span>1</span></td>
+<td><span>ICMP</span></td>
+</tr>
+<tr>
+<td><span>6</span></td>
+<td><span>TCP</span></td>
+</tr>
+<tr>
+<td><span>17</span></td>
+<td><span>UDP</span></td>
+</tr>
+<tr>
+<td><span>47</span></td>
+<td><span>GRE</span></td>
+</tr>
+<tr>
+<td><span>50</span></td>
+<td><span>ESP</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>예를 들어 Protocol 값이 6이라면 상위 프로토콜은 TCP이다.</span></p>
+<h3><span>Header Checksum</span></h3>
+<p><span>IPv4 헤더에 대한 오류 검출 값이다.</span></p>
+<p><span>IPv4 헤더의 일부 필드는 전달 과정에서 변경될 수 있다.</span></p>
+<p><span>대표적인 예시가 TTL이다.</span></p>
+<p><span>일반적인 IPv4 라우터는 TTL을 감소시키면서 헤더 체크섬도 그 변경 사항에 맞춰 갱신한다.</span></p>
+<p><span>단, 이 체크섬은 IP 페이로드 전체를 보호하지 않는다.</span></p>
+<h3><span>Source IP / Destination IP</span></h3>
+<p><span>각각 출발지와 최종 목적지의 IPv4 주소이다.</span></p>
+<p><span>일반적인 라우팅에서는 두 주소가 유지된다.</span></p>
+<p><span>하지만 NAT가 적용되는 경우에는 주소가 변경될 수 있다.</span></p>
+<h2><span>5.4 IPv4 단편화(Fragmentation)</span></h2>
+<p><span>네트워크 인터페이스와 링크에는 한 번에 전송할 수 있는 데이터 크기 제한이 존재한다.</span></p>
+<p><span>이를 MTU(Maximum Transmission Unit)라고 한다.</span></p>
+<p><span>예를 들어 Ethernet에서 흔히 사용하는 MTU는 1500바이트이다.</span></p>
+<p><span>이보다 큰 IPv4 데이터그램을 전달해야 하는 경우에는 단편화가 필요할 수 있다.</span></p>
+<pre><code>원본 IPv4 데이터그램
+         |
+         v
+   Fragmentation
+         |
+     +---+---+
+     |       |
+     v       v
+ Fragment 1 Fragment 2</code></pre>
+<p><span>수신 측은 단편을 모아 원래 데이터그램으로 재조립한다.</span></p>
+<p><span>단편화와 관련된 주요 필드는 Identification, Flags, Fragment Offset이다.</span></p>
+<p><span>다만 DF가 설정되어 있으면 라우터는 해당 패킷을 단편화하지 않고 폐기할 수 있다.</span></p>
+<p><span>단편화는 보안 분석에서 중요하다.</span></p>
+<p><span>그 이유는 모든 단편에 완전한 TCP/UDP 헤더가 존재하는 것은 아니기 때문이다.</span></p>
+<p><span>첫 번째 단편에 TCP 헤더가 존재하더라도 뒤쪽 단편은 해당 TCP 헤더를 포함하지 않을 수 있다.</span></p>
+<p><span>따라서 방화벽은 IP 단편화와 재조립을 고려해야 한다.</span></p>
+<div><hr></div>
+<h1><span>6. IPv6 Header</span></h1>
+<h2><span>6.1 IPv6란?</span></h2>
+<p><span>IPv6(Internet Protocol version 6)는 128비트 IP 주소를 사용하는 인터넷 프로토콜이다.</span></p>
+<p><span>IPv4의 주소 공간 부족 문제를 해결하는 것이 주요 개발 배경 중 하나다.</span></p>
+<p><span>IPv4와 달리 IPv6의 기본 헤더는 고정된 40바이트이다.</span></p>
+<p><span>또한 IPv6는 확장 헤더(Extension Header)를 통해 여러 부가 기능을 표현할 수 있다.</span></p>
+<h2><span>6.2 IPv4와 IPv6 비교</span></h2>
+<p>항목IPv4IPv6</p>
+<table>
+<tbody>
+<tr>
+<td><span>주소 길이</span></td>
+<td><span>32bit</span></td>
+<td><span>128bit</span></td>
+</tr>
+<tr>
+<td><span>기본 헤더</span></td>
+<td><span>20B</span></td>
+<td><span>40B</span></td>
+</tr>
+<tr>
+<td><span>헤더 체크섬</span></td>
+<td><span>있음</span></td>
+<td><span>없음</span></td>
+</tr>
+<tr>
+<td><span>TTL 관련 필드</span></td>
+<td><span>TTL</span></td>
+<td><span>Hop Limit</span></td>
+</tr>
+<tr>
+<td><span>상위 프로토콜 식별</span></td>
+<td><span>Protocol</span></td>
+<td><span>Next Header</span></td>
+</tr>
+<tr>
+<td><span>단편화</span></td>
+<td><span>송신 호스트와 중간 라우터에서 조건부 가능</span></td>
+<td><span>중간 라우터는 수행하지 않음</span></td>
+</tr>
+<tr>
+<td><span>주소 확인</span></td>
+<td><span>ARP</span></td>
+<td><span>NDP</span></td>
+</tr>
+<tr>
+<td><span>브로드캐스트</span></td>
+<td><span>지원</span></td>
+<td><span>브로드캐스트 대신 멀티캐스트 등의 방식 사용</span></td>
+</tr>
+</tbody>
+</table>
+<h2><span>6.3 IPv6 헤더 필드</span></h2>
+<p>필드크기역할</p>
+<table>
+<tbody>
+<tr>
+<td><span>Version</span></td>
+<td><span>4bit</span></td>
+<td><span>IPv6 버전 식별</span></td>
+</tr>
+<tr>
+<td><span>Traffic Class</span></td>
+<td><span>8bit</span></td>
+<td><span>트래픽 분류</span></td>
+</tr>
+<tr>
+<td><span>Flow Label</span></td>
+<td><span>20bit</span></td>
+<td><span>패킷 흐름 식별·분류 지원</span></td>
+</tr>
+<tr>
+<td><span>Payload Length</span></td>
+<td><span>16bit</span></td>
+<td><span>기본 헤더 뒤의 페이로드 길이</span></td>
+</tr>
+<tr>
+<td><span>Next Header</span></td>
+<td><span>8bit</span></td>
+<td><span>다음 헤더 식별</span></td>
+</tr>
+<tr>
+<td><span>Hop Limit</span></td>
+<td><span>8bit</span></td>
+<td><span>전달 홉 제한</span></td>
+</tr>
+<tr>
+<td><span>Source Address</span></td>
+<td><span>128bit</span></td>
+<td><span>출발지 IPv6</span></td>
+</tr>
+<tr>
+<td><span>Destination Address</span></td>
+<td><span>128bit</span></td>
+<td><span>목적지 IPv6</span></td>
+</tr>
+</tbody>
+</table>
+<h3><span>Traffic Class</span></h3>
+<p><span>IPv6 트래픽에 대한 서비스 분류와 혼잡 제어 신호에 사용된다.</span></p>
+<h3><span>Flow Label</span></h3>
+<p><span>관련된 패킷들을 하나의 흐름으로 식별하는 데 사용할 수 있다.</span></p>
+<h3><span>Payload Length</span></h3>
+<p><span>IPv6 기본 헤더 뒤에 존재하는 데이터의 길이를 나타낸다.</span></p>
+<p><span>IPv4의 Total Length와 달리 기본 IPv6 헤더 40바이트를 포함하지 않는다.</span></p>
+<p><span>또한 확장 헤더가 존재하면 그 길이도 포함된다. 특수한 Jumbogram 처리에는 별도의 규칙이 적용된다.</span></p>
+<h3><span>Next Header</span></h3>
+<p><span>다음에 등장하는 헤더를 나타낸다.</span></p>
+<p><span>이는 TCP나 UDP일 수도 있고 다른 IPv6 확장 헤더일 수도 있다.</span></p>
+<h3><span>Hop Limit</span></h3>
+<p><span>IPv4의 TTL과 유사한 역할을 한다.</span></p>
+<p><span>라우터를 통과하면서 값이 감소하고, 소진되면 더 이상 전달할 수 없다.</span></p>
+<h2><span>6.4 IPv6 Extension Header</span></h2>
+<p><span>IPv6는 필요한 경우 기본 헤더와 전송 계층 헤더 사이에 확장 헤더를 사용할 수 있다.</span></p>
+<p><span>예시:</span></p>
+<pre><code>IPv6 기본 헤더
+       ↓
+Hop-by-Hop Options
+       ↓
+Routing Header
+       ↓
+Fragment Header
+       ↓
+TCP Header
+       ↓
+Application Data</code></pre>
+<p><span>모든 IPv6 패킷에 확장 헤더가 존재하는 것은 아니다.</span></p>
+<p><span>일반적인 통신에서는 다음과 같은 구조도 가능하다.</span></p>
+<pre><code>IPv6 → TCP → Data</code></pre>
+<p><span>확장 헤더는 종류와 순서에 따라 처리 규칙이 있으며, 실제 패킷 분석에서는 Next Header 필드를 따라 해석해야 한다.</span></p>
+<div><hr></div>
+<h1><span>7. TCP Header</span></h1>
+<h2><span>7.1 TCP란?</span></h2>
+<p><span>TCP(Transmission Control Protocol)는 신뢰성 있는 바이트 스트림을 제공하는 연결 지향 전송 프로토콜이다.</span></p>
+<p><span>TCP가 제공하는 주요 기능은 다음과 같다.</span></p>
+<ul>
+<li><span>연결 설정 및 종료</span></li>
+<li><span>데이터 순서 관리</span></li>
+<li><span>수신 확인</span></li>
+<li><span>손실 데이터 재전송</span></li>
+<li><span>흐름 제어</span></li>
+<li><span>혼잡 제어</span></li>
+</ul>
+<p><span>다만 TCP가 언제나 데이터 전달 성공을 보장하는 것은 아니다.</span></p>
+<p><span>연결이 유지될 수 없거나 오류가 복구되지 않으면 통신이 실패할 수 있다.</span></p>
+<h2><span>7.2 TCP 헤더 구조</span></h2>
+<p><span>기본 TCP 헤더는 20바이트이다.</span></p>
+<p><span>TCP Options에 따라 최대 60바이트까지 확장할 수 있다.</span></p>
+<p>필드크기역할</p>
+<table>
+<tbody>
+<tr>
+<td><span>Source Port</span></td>
+<td><span>16bit</span></td>
+<td><span>출발지 포트</span></td>
+</tr>
+<tr>
+<td><span>Destination Port</span></td>
+<td><span>16bit</span></td>
+<td><span>목적지 포트</span></td>
+</tr>
+<tr>
+<td><span>Sequence Number</span></td>
+<td><span>32bit</span></td>
+<td><span>바이트 스트림의 순서</span></td>
+</tr>
+<tr>
+<td><span>Acknowledgment Number</span></td>
+<td><span>32bit</span></td>
+<td><span>다음에 수신할 것으로 기대하는 바이트 번호</span></td>
+</tr>
+<tr>
+<td><span>Data Offset</span></td>
+<td><span>4bit</span></td>
+<td><span>TCP 헤더 길이</span></td>
+</tr>
+<tr>
+<td><span>Reserved</span></td>
+<td><span>가변</span></td>
+<td><span>예약 비트</span></td>
+</tr>
+<tr>
+<td><span>Flags</span></td>
+<td><span>제어 비트</span></td>
+<td><span>연결 및 데이터 처리 제어</span></td>
+</tr>
+<tr>
+<td><span>Window Size</span></td>
+<td><span>16bit</span></td>
+<td><span>수신 윈도우 광고</span></td>
+</tr>
+<tr>
+<td><span>Checksum</span></td>
+<td><span>16bit</span></td>
+<td><span>TCP 메시지 오류 검출</span></td>
+</tr>
+<tr>
+<td><span>Urgent Pointer</span></td>
+<td><span>16bit</span></td>
+<td><span>긴급 데이터 관련 정보</span></td>
+</tr>
+<tr>
+<td><span>Options</span></td>
+<td><span>가변</span></td>
+<td><span>MSS, Window Scale, SACK 등</span></td>
+</tr>
+</tbody>
+</table>
+<h2><span>7.3 Source Port와 Destination Port</span></h2>
+<p><span>IP 주소가 네트워크상의 컴퓨터를 식별하는 데 사용된다면 포트는 컴퓨터 안의 통신 종단을 구분하는 데 사용된다.</span></p>
+<p><span>예:</span></p>
+<pre><code>Client
+192.168.1.10:50000
+
+Server
+203.0.113.20:443</code></pre>
+<p><span>이 경우 TCP 헤더의 주요 값은 다음과 같다.</span></p>
+<pre><code>Source Port      = 50000
+Destination Port = 443</code></pre>
+<p><span>일반적인 TCP 연결은 다음 네 가지 값의 조합으로 구별할 수 있다.</span></p>
+<pre><code>Source IP
+Source Port
+Destination IP
+Destination Port</code></pre>
+<p><span>이는 흔히 TCP 4-Tuple이라고 부른다.</span></p>
+<h2><span>7.4 TCP 3-Way Handshake</span></h2>
+<p><span>TCP는 통신을 시작하기 전에 연결 설정 과정을 수행한다.</span></p>
+<p><span>이를 3-Way Handshake라고 한다.</span></p>
+<pre><code>Client                         Server
+   |                              |
+   | -------- SYN -------------&gt; |
+   |                              |
+   | &lt;------ SYN + ACK --------- |
+   |                              |
+   | -------- ACK -------------&gt; |
+   |                              |
+   |       연결 설정 완료          |</code></pre>
+<h3><span>① SYN</span></h3>
+<p><span>클라이언트가 서버에 연결을 요청한다.</span></p>
+<p><span>이때 초기 Sequence Number를 전달한다.</span></p>
+<p><span>예:</span></p>
+<pre><code>SYN
+Seq = 1000</code></pre>
+<h3><span>② SYN + ACK</span></h3>
+<p><span>서버는 연결 요청을 확인하고 자신의 초기 Sequence Number를 전달한다.</span></p>
+<pre><code>SYN + ACK
+
+Seq = 5000
+Ack = 1001</code></pre>
+<p><span>SYN은 Sequence Number 공간을 1만큼 소비하기 때문에 ACK가 1001이 된다.</span></p>
+<h3><span>③ ACK</span></h3>
+<p><span>클라이언트는 서버의 SYN에 대해 최종 확인 응답을 보낸다.</span></p>
+<pre><code>ACK
+
+Seq = 1001
+Ack = 5001</code></pre>
+<p><span>이 과정을 통해 양쪽은 서로의 초기 Sequence Number를 확인하고 연결을 설정한다.</span></p>
+<h2><span>7.5 Sequence Number</span></h2>
+<p><span>TCP는 데이터를 바이트 스트림으로 다룬다.</span></p>
+<p><span>Sequence Number는 해당 세그먼트 데이터의 첫 번째 바이트가 스트림에서 어떤 번호를 갖는지 나타낸다.</span></p>
+<p><span>예를 들어 다음 데이터가 있다고 가정하자.</span></p>
+<pre><code>HELLO</code></pre>
+<p><span>총 5바이트이다.</span></p>
+<p><span>이 데이터의 첫 번째 바이트 번호가 1001이라면 다음과 같이 표현할 수 있다.</span></p>
+<pre><code>H = 1001
+E = 1002
+L = 1003
+L = 1004
+O = 1005</code></pre>
+<p><span>따라서 모든 데이터가 정상적으로 수신되었다면 수신 측은 다음에 1006번 바이트를 기대한다.</span></p>
+<h2><span>7.6 Acknowledgment Number</span></h2>
+<p><span>ACK Number는 일반적으로 </span><b><span>다음에 연속해서 받기를 기대하는 바이트 번호</span></b><span>를 의미한다.</span></p>
+<p><span>앞의 예시에서 </span><span>HELLO</span><span>를 모두 받았다면:</span></p>
+<pre><code>ACK = 1006</code></pre>
+<p><span>이라는 응답을 보낼 수 있다.</span></p>
+<p><span>이것은 1005번까지의 바이트를 연속적으로 받았다는 의미이다.</span></p>
+<p><span>중요한 점은 TCP의 ACK가 기본적으로 누적 확인 응답이라는 것이다.</span></p>
+<h2><span>7.7 TCP Flags</span></h2>
+<p><span>TCP Flags는 연결 설정, 종료, 재설정 등에 사용되는 제어 정보이다.</span></p>
+<p>Flag의미주요 역할</p>
+<table>
+<tbody>
+<tr>
+<td><span>SYN</span></td>
+<td><span>Synchronize</span></td>
+<td><span>연결 시작</span></td>
+</tr>
+<tr>
+<td><span>ACK</span></td>
+<td><span>Acknowledgment</span></td>
+<td><span>수신 확인 정보 유효</span></td>
+</tr>
+<tr>
+<td><span>FIN</span></td>
+<td><span>Finish</span></td>
+<td><span>해당 방향의 전송 종료</span></td>
+</tr>
+<tr>
+<td><span>RST</span></td>
+<td><span>Reset</span></td>
+<td><span>연결 재설정 또는 거부</span></td>
+</tr>
+<tr>
+<td><span>PSH</span></td>
+<td><span>Push</span></td>
+<td><span>데이터의 신속한 전달 요청</span></td>
+</tr>
+<tr>
+<td><span>URG</span></td>
+<td><span>Urgent</span></td>
+<td><span>긴급 데이터 관련 정보</span></td>
+</tr>
+<tr>
+<td><span>ECE</span></td>
+<td><span>ECN Echo</span></td>
+<td><span>혼잡 신호 전달</span></td>
+</tr>
+<tr>
+<td><span>CWR</span></td>
+<td><span>Congestion Window Reduced</span></td>
+<td><span>혼잡 제어 반응 표시</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>자주 나타나는 조합은 다음과 같다.</span></p>
+<p>Flags의미</p>
+<table>
+<tbody>
+<tr>
+<td><span>SYN</span></td>
+<td><span>연결 요청</span></td>
+</tr>
+<tr>
+<td><span>SYN + ACK</span></td>
+<td><span>연결 요청에 대한 응답</span></td>
+</tr>
+<tr>
+<td><span>ACK</span></td>
+<td><span>수신 확인</span></td>
+</tr>
+<tr>
+<td><span>PSH + ACK</span></td>
+<td><span>데이터 전달 시 자주 사용되는 조합</span></td>
+</tr>
+<tr>
+<td><span>FIN + ACK</span></td>
+<td><span>연결 종료 과정</span></td>
+</tr>
+<tr>
+<td><span>RST</span></td>
+<td><span>연결 재설정</span></td>
+</tr>
+</tbody>
+</table>
+<h2><span>7.8 TCP 재전송</span></h2>
+<p><span>TCP는 데이터가 손실되면 재전송을 수행할 수 있다.</span></p>
+<p><span>예를 들어 다음 데이터를 전송한다고 가정하자.</span></p>
+<pre><code>Segment 1 : 1001~1500
+Segment 2 : 1501~2000
+Segment 3 : 2001~2500</code></pre>
+<p><span>Segment 2가 손실되었다고 하자.</span></p>
+<p><span>수신 측이 Segment 3을 받더라도 1501부터의 데이터가 빠져 있다면 일반적으로 누적 ACK는 1501을 유지할 수 있다.</span></p>
+<p><span>송신 측은 중복 ACK, 선택적 확인 응답(SACK), 재전송 타이머 등의 정보를 이용해 손실을 추정하고 필요한 데이터를 재전송할 수 있다.</span></p>
+<p><span>이를 통해 TCP는 손실이 발생할 수 있는 IP 네트워크 위에서 신뢰성 있는 통신을 제공한다.</span></p>
+<h2><span>7.9 TCP Window Size</span></h2>
+<p><span>TCP는 수신 측이 처리할 수 있는 데이터 양을 고려해야 한다.</span></p>
+<p><span>이를 흐름 제어(Flow Control)라고 한다.</span></p>
+<p><span>수신 측은 TCP Window 필드를 이용해 자신이 수용할 수 있는 수신 윈도우 크기를 송신 측에 알린다.</span></p>
+<p><span>실제 유효 윈도우 크기는 연결 협상에 따라 Window Scale 옵션의 영향을 받을 수 있다.</span></p>
+<p><span>이 기능은 수신 측의 처리 능력을 초과해 데이터를 보내는 상황을 방지하는 데 기여한다.</span></p>
+<p><span>흐름 제어는 수신 측 버퍼 상태에 관한 기능이고, 혼잡 제어는 네트워크 혼잡 상황을 고려하는 별도의 기능이다.</span></p>
+<h2><span>7.10 TCP 연결 종료</span></h2>
+<p><span>TCP 연결은 일반적으로 FIN과 ACK를 이용해 정상적으로 종료할 수 있다.</span></p>
+<p><span>대표적인 종료 흐름은 다음과 같다.</span></p>
+<pre><code>Client                         Server
+   |                              |
+   | -------- FIN -------------&gt; |
+   |                              |
+   | &lt;------- ACK -------------- |
+   |                              |
+   | &lt;------- FIN -------------- |
+   |                              |
+   | -------- ACK -------------&gt; |
+   |                              |</code></pre>
+<p><span>실제 종료 과정에서는 TCP 상태와 양쪽 애플리케이션의 종료 시점에 따라 FIN과 ACK가 결합되거나 다른 순서로 관찰될 수도 있다.</span></p>
+<p><span>RST는 정상적인 FIN 종료와 달리 연결을 재설정하거나 거부할 때 사용된다.</span></p>
+<div><hr></div>
+<h1><span>8. UDP Header</span></h1>
+<h2><span>8.1 UDP란?</span></h2>
+<p><span>UDP(User Datagram Protocol)는 비연결형 전송 프로토콜이다.</span></p>
+<p><span>TCP와 달리 연결 설정을 위한 3-Way Handshake를 수행하지 않는다.</span></p>
+<p><span>UDP는 데이터를 독립적인 데이터그램 단위로 전달한다.</span></p>
+<p><span>UDP 자체는 다음 기능을 제공하지 않는다.</span></p>
+<ul>
+<li><span>데이터 전달 성공 보장</span></li>
+<li><span>데이터 순서 보장</span></li>
+<li><span>손실 데이터 재전송</span></li>
+<li><span>TCP와 같은 흐름 제어</span></li>
+</ul>
+<p><span>필요한 경우 애플리케이션이나 상위 프로토콜이 이러한 기능을 구현해야 한다.</span></p>
+<h2><span>8.2 UDP 헤더 구조</span></h2>
+<p><span>UDP 헤더는 고정된 8바이트이다.</span></p>
+<pre><code>+------------------+------------------+
+|   Source Port    | Destination Port |
+|      16bit       |      16bit       |
++------------------+------------------+
+|      Length      |     Checksum     |
+|      16bit       |      16bit       |
++------------------+------------------+
+|               Data                  |
++-------------------------------------+</code></pre>
+<p>필드크기설명</p>
+<table>
+<tbody>
+<tr>
+<td><span>Source Port</span></td>
+<td><span>2B</span></td>
+<td><span>출발지 포트</span></td>
+</tr>
+<tr>
+<td><span>Destination Port</span></td>
+<td><span>2B</span></td>
+<td><span>목적지 포트</span></td>
+</tr>
+<tr>
+<td><span>Length</span></td>
+<td><span>2B</span></td>
+<td><span>UDP 헤더와 데이터 길이</span></td>
+</tr>
+<tr>
+<td><span>Checksum</span></td>
+<td><span>2B</span></td>
+<td><span>UDP 메시지 오류 검출</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>UDP Length는 일반적으로 UDP 헤더와 페이로드를 합친 길이를 나타낸다.</span></p>
+<p><span>따라서 5바이트 데이터를 보낸다면:</span></p>
+<pre><code>UDP Header = 8 bytes
+Data       = 5 bytes
+
+UDP Length = 13 bytes</code></pre>
+<p><span>가 된다.</span></p>
+<p><span>UDP 체크섬은 IP 의사 헤더(Pseudo Header)의 일부 정보도 사용해 계산한다.</span></p>
+<p><span>IPv4에서는 UDP 체크섬을 사용하지 않는 경우가 허용되지만, IPv6에서는 일반적으로 UDP 체크섬이 필수이며 일부 특수한 예외가 존재한다.</span></p>
+<h2><span>8.3 UDP가 사용되는 이유</span></h2>
+<p><span>UDP는 TCP보다 헤더가 단순하며 연결 설정이 필요하지 않다.</span></p>
+<p><span>예를 들어 실시간 음성 통신에서는 지연된 오래된 데이터를 무조건 다시 받는 것보다 최신 데이터를 빠르게 처리하는 것이 더 중요할 수 있다.</span></p>
+<p><span>다만 UDP 자체가 빠른 전송이나 낮은 지연을 보장하지는 않는다.</span></p>
+<p><span>실제 성능과 신뢰성은 네트워크 상태와 상위 프로토콜의 설계에 따라 달라진다.</span></p>
+<p><span>대표적인 활용 사례는 다음과 같다.</span></p>
+<ul>
+<li><span>DNS</span></li>
+<li><span>실시간 음성 및 영상 전송</span></li>
+<li><span>온라인 게임</span></li>
+<li><span>QUIC 기반 HTTP/3</span></li>
+<li><span>일부 스트리밍 프로토콜</span></li>
+</ul>
+<h2><span>8.4 TCP와 UDP 비교</span></h2>
+<p>구분TCPUDP</p>
+<table>
+<tbody>
+<tr>
+<td><span>통신 형태</span></td>
+<td><span>연결 지향</span></td>
+<td><span>비연결형</span></td>
+</tr>
+<tr>
+<td><span>데이터 단위</span></td>
+<td><span>바이트 스트림</span></td>
+<td><span>데이터그램</span></td>
+</tr>
+<tr>
+<td><span>연결 설정</span></td>
+<td><span>필요</span></td>
+<td><span>필요 없음</span></td>
+</tr>
+<tr>
+<td><span>순서 보장</span></td>
+<td><span>제공</span></td>
+<td><span>제공하지 않음</span></td>
+</tr>
+<tr>
+<td><span>재전송</span></td>
+<td><span>제공</span></td>
+<td><span>제공하지 않음</span></td>
+</tr>
+<tr>
+<td><span>흐름 제어</span></td>
+<td><span>제공</span></td>
+<td><span>제공하지 않음</span></td>
+</tr>
+<tr>
+<td><span>기본 헤더 길이</span></td>
+<td><span>20B</span></td>
+<td><span>8B</span></td>
+</tr>
+<tr>
+<td><span>주요 활용</span></td>
+<td><span>HTTPS over TCP, SSH</span></td>
+<td><span>DNS, QUIC, 실시간 통신</span></td>
+</tr>
+</tbody>
+</table>
+<div><hr></div>
+<h1><span>9. ICMP Header</span></h1>
+<h2><span>9.1 ICMP란?</span></h2>
+<p><span>ICMP(Internet Control Message Protocol)는 IP 네트워크의 오류와 제어 정보를 전달하는 데 사용되는 프로토콜이다.</span></p>
+<p><span>가장 잘 알려진 활용 사례는 </span><span>ping</span><span>이다.</span></p>
+<p><span>하지만 ICMP는 단순히 연결 여부를 확인하는 기능만 제공하는 것이 아니다.</span></p>
+<p><span>대표적인 기능은 다음과 같다.</span></p>
+<ul>
+<li><span>Echo Request 및 Echo Reply</span></li>
+<li><span>목적지 도달 불가 알림</span></li>
+<li><span>TTL 소진 알림</span></li>
+<li><span>일부 라우팅 관련 제어 메시지</span></li>
+<li><span>패킷 처리 오류 알림</span></li>
+</ul>
+<h2><span>9.2 ICMPv4 메시지 구조</span></h2>
+<p><span>ICMP 메시지는 Type에 따라 세부적인 구조가 달라진다.</span></p>
+<p><span>일반적으로 앞부분에 다음 필드가 존재한다.</span></p>
+<p>필드크기역할</p>
+<table>
+<tbody>
+<tr>
+<td><span>Type</span></td>
+<td><span>1B</span></td>
+<td><span>메시지의 종류</span></td>
+</tr>
+<tr>
+<td><span>Code</span></td>
+<td><span>1B</span></td>
+<td><span>세부적인 메시지 의미</span></td>
+</tr>
+<tr>
+<td><span>Checksum</span></td>
+<td><span>2B</span></td>
+<td><span>ICMP 메시지 오류 검출</span></td>
+</tr>
+<tr>
+<td><span>Rest of Header</span></td>
+<td><span>가변</span></td>
+<td><span>메시지별 추가 정보</span></td>
+</tr>
+<tr>
+<td><span>Data</span></td>
+<td><span>가변</span></td>
+<td><span>요청 데이터 또는 오류 관련 정보</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>대표적인 ICMP Type은 다음과 같다.</span></p>
+<p>Type이름의미</p>
+<table>
+<tbody>
+<tr>
+<td><span>0</span></td>
+<td><span>Echo Reply</span></td>
+<td><span>Echo 요청에 대한 응답</span></td>
+</tr>
+<tr>
+<td><span>3</span></td>
+<td><span>Destination Unreachable</span></td>
+<td><span>목적지 도달 불가</span></td>
+</tr>
+<tr>
+<td><span>5</span></td>
+<td><span>Redirect</span></td>
+<td><span>더 적절한 경로 알림</span></td>
+</tr>
+<tr>
+<td><span>8</span></td>
+<td><span>Echo Request</span></td>
+<td><span>Echo 요청</span></td>
+</tr>
+<tr>
+<td><span>11</span></td>
+<td><span>Time Exceeded</span></td>
+<td><span>TTL 등의 제한 초과</span></td>
+</tr>
+<tr>
+<td><span>12</span></td>
+<td><span>Parameter Problem</span></td>
+<td><span>IP 헤더 등의 문제 알림</span></td>
+</tr>
+</tbody>
+</table>
+<h2><span>9.3 ICMP Echo Request / Echo Reply</span></h2>
+<p><span>일반적인 ping 과정은 다음과 같다.</span></p>
+<pre><code>PC A                          PC B
+ |                             |
+ | ---- Echo Request -------&gt; |
+ |                             |
+ | &lt;---- Echo Reply ---------- |
+ |                             |</code></pre>
+<p><span>Echo Request는 Type 8이다.</span></p>
+<p><span>Echo Reply는 Type 0이다.</span></p>
+<p><span>이러한 메시지를 이용해 상대 호스트의 응답 여부와 왕복 시간을 측정할 수 있다.</span></p>
+<p><span>다만 ping 응답이 없다고 해서 반드시 상대 호스트가 꺼져 있다는 뜻은 아니다.</span></p>
+<p><span>방화벽 정책이나 ICMP 제한 때문에 응답하지 않을 수도 있다.</span></p>
+<h2><span>9.4 ICMP Time Exceeded</span></h2>
+<p><span>IP 패킷의 TTL이 소진되면 더 이상 패킷을 전달할 수 없다.</span></p>
+<p><span>라우터는 해당 패킷을 폐기하고, 조건이 허용되면 출발지에 ICMP Time Exceeded 메시지를 보낼 수 있다.</span></p>
+<pre><code>Source
+   |
+   | TTL = 2
+   v
+Router 1
+   |
+   | TTL = 1
+   v
+Router 2
+   |
+   X TTL 소진
+   |
+   +---- ICMP Time Exceeded ----&gt; Source</code></pre>
+<p><span>Traceroute는 이러한 원리를 활용하는 대표적인 진단 도구이다.</span></p>
+<h2><span>9.5 ICMP와 TCP/UDP의 차이</span></h2>
+<p><span>ICMP는 TCP와 UDP처럼 애플리케이션 데이터를 전달하기 위한 일반적인 전송 계층 프로토콜이 아니다.</span></p>
+<p><span>ICMPv4는 IPv4 패킷의 페이로드로 직접 전달된다.</span></p>
+<p><span>이때 IPv4 Protocol 필드 값은 1이다.</span></p>
+<pre><code>IPv4 Header
+    |
+    +---- ICMP Message</code></pre>
+<p><span>반면 TCP와 UDP는 다음과 같은 구조를 가진다.</span></p>
+<pre><code>IPv4 Header
+    |
+    +---- TCP Header
+               |
+               +---- Application Data</code></pre>
+<pre><code>IPv4 Header
+    |
+    +---- UDP Header
+               |
+               +---- Application Data</code></pre>
+<div><hr></div>
+<h1><span>10. 전체 통신 흐름 정리</span></h1>
+<p><span>이제 지금까지 학습한 헤더들이 실제로 어떻게 연결되는지 살펴보자.</span></p>
+<p><span>다음과 같은 네트워크를 가정한다.</span></p>
+<pre><code>Client
+192.168.1.10
+     |
+     |
+Gateway
+192.168.1.1
+     |
+     |
+Internet
+     |
+     |
+Web Server
+203.0.113.20</code></pre>
+<p><span>클라이언트가 TCP 기반 HTTPS 웹 서버에 접속하는 상황이다.</span></p>
+<h2><span>10.1 서버 IP 주소 확인</span></h2>
+<p><span>클라이언트는 도메인 이름에 대응하는 IP 주소가 필요하다.</span></p>
+<p><span>이미 캐시된 정보가 있다면 이를 사용할 수 있고, 그렇지 않다면 DNS 질의가 필요할 수 있다.</span></p>
+<p><span>DNS는 UDP, TCP, 암호화된 전송 방식 등 여러 형태를 사용할 수 있다.</span></p>
+<h2><span>10.2 라우팅 테이블 확인</span></h2>
+<p><span>클라이언트는 목적지 서버의 IP 주소를 기준으로 라우팅 테이블을 조회한다.</span></p>
+<p><span>라우팅은 패킷을 어느 인터페이스로 내보내고 어느 다음 홉으로 전달할지 결정하는 과정이다.</span></p>
+<p><span>목적지가 다른 네트워크에 있다면 일반적으로 기본 게이트웨이를 이용한다.</span></p>
+<h2><span>10.3 ARP로 게이트웨이 MAC 확인</span></h2>
+<p><span>게이트웨이의 MAC 주소를 모른다면 ARP를 사용해 확인한다.</span></p>
+<p><span>이때 ARP 요청과 응답이 발생할 수 있다.</span></p>
+<h2><span>10.4 Ethernet 프레임 구성</span></h2>
+<p><span>이후 클라이언트는 다음과 같은 프레임을 구성할 수 있다.</span></p>
+<p><b><span>Ethernet Header</span></b></p>
+<pre><code>Source MAC = Client MAC
+Destination MAC = Gateway MAC
+EtherType = IPv4</code></pre>
+<p><b><span>IP Header</span></b></p>
+<pre><code>Source IP = 192.168.1.10
+Destination IP = 203.0.113.20
+Protocol = TCP</code></pre>
+<p><b><span>TCP Header</span></b></p>
+<pre><code>Source Port = 50000
+Destination Port = 443
+Flags = SYN</code></pre>
+<p><span>여기서 중요한 것은 Ethernet Destination MAC과 IP Destination Address가 서로 다른 목적을 가진다는 사실이다.</span></p>
+<p><span>Ethernet Destination MAC은 현재 링크에서 패킷을 전달할 다음 장비를 가리킨다.</span></p>
+<p><span>IP Destination Address는 최종 목적지 서버를 나타낸다.</span></p>
+<h2><span>10.5 라우터를 통한 전달</span></h2>
+<p><span>게이트웨이는 패킷의 목적지 IP를 확인한 뒤 라우팅 테이블을 이용해 다음 경로를 선택한다.</span></p>
+<p><span>일반적인 IPv4 라우팅에서는 다음과 같은 작업이 수행된다.</span></p>
+<ol>
+<li><span>수신한 프레임에서 IP 패킷을 처리한다.</span></li>
+<li><span>목적지 IP 주소를 확인한다.</span></li>
+<li><span>다음 경로를 선택한다.</span></li>
+<li><span>TTL을 감소시킨다.</span></li>
+<li><span>필요한 IPv4 헤더 정보를 갱신한다.</span></li>
+<li><span>다음 링크에서 사용할 새 데이터링크 프레임을 구성한다.</span></li>
+</ol>
+<p><span>이 과정은 목적지에 도달할 때까지 여러 라우터에서 반복될 수 있다.</span></p>
+<h2><span>10.6 TCP 연결 설정</span></h2>
+<p><span>서버가 TCP SYN을 받으면 연결 요청을 처리한다.</span></p>
+<p><span>조건이 정상적이라면 서버는 SYN+ACK를 반환할 수 있다.</span></p>
+<p><span>클라이언트가 ACK로 응답하면 TCP 연결이 성립한다.</span></p>
+<h2><span>10.7 TLS 핸드셰이크</span></h2>
+<p><span>HTTPS를 사용하는 경우 TCP 연결 위에서 TLS 핸드셰이크가 진행된다.</span></p>
+<p><span>이 과정에서 일반적으로 다음과 같은 작업이 수행된다.</span></p>
+<ul>
+<li><span>서버 인증</span></li>
+<li><span>암호화 방식 협상</span></li>
+<li><span>키 합의</span></li>
+<li><span>암호화 통신 준비</span></li>
+</ul>
+<p><span>TLS는 통신 내용을 보호하는 역할을 한다.</span></p>
+<p><span>단, HTTPS 통신에서 IP 주소나 TCP 포트와 같은 모든 헤더 정보가 암호화되는 것은 아니다.</span></p>
+<h2><span>10.8 애플리케이션 데이터 전달</span></h2>
+<p><span>연결과 TLS 설정이 완료되면 HTTP 요청과 응답을 교환할 수 있다.</span></p>
+<p><span>데이터는 TCP, IP, 데이터링크 계층의 처리를 거쳐 상대방에게 전달된다.</span></p>
+<p><span>수신 측에서는 반대 방향으로 헤더를 해석하고 데이터를 애플리케이션에 전달한다.</span></p>
+<h2><span>10.9 통신 종료</span></h2>
+<p><span>통신이 끝난 뒤 TCP 연결을 종료할 수 있다.</span></p>
+<p><span>일반적인 정상 종료에서는 FIN과 ACK가 사용된다.</span></p>
+<p><span>다만 HTTP Keep-Alive 같은 연결 재사용 메커니즘 때문에 요청 하나가 끝났다고 연결을 즉시 종료하는 것은 아니다.</span></p>
+<div><hr></div>
+<h1><span>11. 각 헤더는 누가 읽고, 언제 변경될까?</span></h1>
+<p><span>프로토콜을 이해할 때 가장 중요한 질문은 다음 두 가지이다.</span></p>
+<p><b><span>누가 이 헤더를 읽는가?</span></b></p>
+<p><b><span>어떤 상황에서 헤더 값이 변경되는가?</span></b></p>
+<p>헤더주요 처리 주체변경될 수 있는 정보</p>
+<table>
+<tbody>
+<tr>
+<td><span>Ethernet</span></td>
+<td><span>NIC, L2 스위치, 호스트 데이터링크 처리</span></td>
+<td><span>링크마다 Source/Destination MAC 재구성</span></td>
+</tr>
+<tr>
+<td><span>ARP</span></td>
+<td><span>IPv4 호스트 및 이웃 주소 확인 기능</span></td>
+<td><span>요청·응답 메시지의 주소 정보</span></td>
+</tr>
+<tr>
+<td><span>IPv4</span></td>
+<td><span>호스트, 라우터</span></td>
+<td><span>TTL, Checksum, NAT 주소, 단편화 필드 등</span></td>
+</tr>
+<tr>
+<td><span>IPv6</span></td>
+<td><span>호스트, 라우터</span></td>
+<td><span>Hop Limit 등</span></td>
+</tr>
+<tr>
+<td><span>TCP</span></td>
+<td><span>TCP 종단 시스템</span></td>
+<td><span>Sequence, ACK, Flags, Window 등</span></td>
+</tr>
+<tr>
+<td><span>UDP</span></td>
+<td><span>UDP 종단 시스템</span></td>
+<td><span>포트, 길이, 체크섬 등</span></td>
+</tr>
+<tr>
+<td><span>ICMP</span></td>
+<td><span>호스트 및 라우터</span></td>
+<td><span>오류·진단 메시지 생성과 응답</span></td>
+</tr>
+</tbody>
+</table>
+<p><span>여기서 헤더가 변경된다는 것이 모든 라우터가 모든 필드를 변경한다는 뜻은 아니다.</span></p>
+<p><span>예를 들어 일반적인 라우터는 통과하는 TCP 패킷의 Sequence Number를 임의로 변경하지 않는다.</span></p>
+<p><span>반면 NAT 장비는 IP 주소나 포트를 변환할 수 있으며, 변경된 내용에 맞춰 체크섬도 조정해야 할 수 있다.</span></p>
+<div><hr></div>
+<h1>&nbsp;</h1>
+<div><hr></div>
+<h1><span>참고 자료</span></h1>
+<ol>
+<li><a href="https://en.wikipedia.org/wiki/Ethernet_frame"><span>Ethernet Frame — Wikipedia</span></a></li>
+<li><a href="https://en.wikipedia.org/wiki/Address_Resolution_Protocol"><span>ARP — Wikipedia</span></a></li>
+<li><a href="https://en.wikipedia.org/wiki/IPv4"><span>IPv4 — Wikipedia</span></a></li>
+<li><a href="https://en.wikipedia.org/wiki/IPv6_packet"><span>IPv6 Packet — Wikipedia</span></a></li>
+<li><a href="https://en.wikipedia.org/wiki/Transmission_Control_Protocol"><span>TCP — Wikipedia</span></a></li>
+<li><a href="https://en.wikipedia.org/wiki/User_Datagram_Protocol"><span>UDP — Wikipedia</span></a></li>
+<li><a href="https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol"><span>ICMP — Wikipedia</span></a></li>
+<li><a href="https://nmap.org/book/tcpip-ref.html"><span>Nmap — TCP/IP Reference</span></a></li>
+</ol>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p></div><p class="source-note">원문: <a href="https://ms-egg.tistory.com/24" target="_blank" rel="noopener noreferrer">Tistory ↗</a></p><a class="back" href="../../archive/">← 기록으로</a></article><footer><span>© 2026 Raw_Egg</span><a href="https://github.com/BackedEgg" target="_blank" rel="noopener noreferrer">GitHub ↗</a></footer></main></body></html>

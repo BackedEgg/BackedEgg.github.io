@@ -1,0 +1,52 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Raw_Egg의 개발·보안 학습 기록"><meta name="theme-color" content="#fff9ed"><title>Web - Search Filter · Raw_Egg</title><link rel="stylesheet" href="../../style.css"><link rel="stylesheet" href="../../egg-extra.css"><script src="../../app.js" defer></script></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><aside class="rail"><a class="logo" href="../../" aria-label="Raw_Egg 홈"><span class="logo-shape"><i></i></span><span>Raw_Egg<span class="period">.</span></span></a><nav class="rail-nav" aria-label="주 메뉴"><a  href="../../">Home</a><a aria-current="page" href="../../archive/">Records</a><a  href="../../categories/">Categories</a><a  href="../../about/">About</a></nav><div class="rail-bottom"><span>make me baked<span class="period">.</span></span><button class="theme" type="button" aria-label="색상 모드 전환">◐ <span>Dark</span></button></div></aside><header class="mobile-head"><a href="../../">🥚 Raw_Egg.</a><button class="menu" type="button" aria-expanded="false" aria-label="메뉴 열기">☰</button></header><main id="main" class="main"><article class="article"><a class="back" href="../../archive/">← 기록으로</a><header class="article-head"><span class="kicker">2026-11-10 · RECORD</span><h1>Web - Search Filter</h1><p>문제설명 : 자료실에서 파일 이름의 일부만 입력해도 관련 파일 목록을 찾아주는 검색기능이다. 목표: 검색 조건을 무력화해 감춰진 파일까지 전부 얻어라 파일이름을 검색하면 큰따옴표까지 보인다. 그래서…</p></header><div class="article-body"><h3>문제설명 :&nbsp;</h3>
+<p>자료실에서 파일 이름의 일부만 입력해도 관련 파일 목록을 찾아주는 검색기능이다.</p>
+<h3>목표:</h3>
+<p>검색 조건을 무력화해 감춰진 파일까지 전부 얻어라</p>
+<p></p><figure><span><img src="image-1.png"></span></figure>
+<p></p>
+<p>파일이름을 검색하면 큰따옴표까지 보인다.&nbsp;</p>
+<p>&nbsp;</p>
+<p>그래서 큰 따옴표로 감싸서 공격을 보내면</p>
+<p></p><figure><span><img src="image-2.png"></span></figure>
+<p></p>
+<p>이런 결과가 뜬다..</p>
+<p>도대체 왜 그런걸까?</p>
+<p>&nbsp;</p>
+<p>검색결과에 따옴표가 포함된거 보면 뭔가 관련이 있는것 같은데..</p>
+<p><span>SQL에서 따옴표가 어떤 역할을 하는지 알아보았다.</span></p>
+<div>
+<table>
+<tbody>
+<tr>
+<td>기호</td>
+<td>주된역할</td>
+<td>예시</td>
+</tr>
+<tr>
+<td><span>작은따옴표 </span>' '</td>
+<td><b><span>문자열 값</span></b><span>을 감싼다</span></td>
+<td>'admin'</td>
+</tr>
+<tr>
+<td><span>큰따옴표 </span>" "</td>
+<td><b><span>테이블명·열 이름 같은 식별자</span></b><span>를 감싼다</span></td>
+<td>"username"</td>
+</tr>
+</tbody>
+</table>
+<pre><code>SELECT username FROM users;
+SELECT "username" FROM users;</code></pre>
+</div>
+<p>&nbsp;</p>
+<p><span>위 예시에서 실제 열 이름이 </span>username<span>이라면, 보통 두 문장은 같은 값을 반환한다.</span></p>
+<ul>
+<li>username<span>: 따옴표가 없는 </span><b><span>식별자</span></b><span>다. DBMS가 열 이름으로 해석한다.</span></li>
+<li>"username"<span>: 큰따옴표로 감싼 </span><b><span>식별자</span></b><span>다. 이름을 적힌 그대로 지정한다.</span></li>
+</ul>
+<p>&nbsp;</p>
+<p><span>만약 이 서버가 내가 적은 파일이름을 그대로 해서 해당 문자열이 행에 있는지를 찾는식으로 만들어져 있다면 아마 작은 따옴표를 사용했을것이다.&nbsp;&nbsp;</span></p>
+<p></p><figure><span><img src="image-3.png"></span></figure>
+<p></p>
+<p>&nbsp;</p>
+<p>예상대로 작은 따옴표로 바꾸어주었더니 문제가 풀렸다.</p>
+<p>--는 뒤의 구문들을 주석처리하겠다는 것이다.</p></div><p class="source-note">원문: <a href="https://ms-egg.tistory.com/31" target="_blank" rel="noopener noreferrer">Tistory ↗</a></p><a class="back" href="../../archive/">← 기록으로</a></article><footer><span>© 2026 Raw_Egg</span><a href="https://github.com/BackedEgg" target="_blank" rel="noopener noreferrer">GitHub ↗</a></footer></main></body></html>

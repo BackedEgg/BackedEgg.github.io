@@ -82,3 +82,13 @@ body.dark .main{background:#282118}body.dark .hero-new{background:radial-gradien
 .article-body p{overflow-wrap:anywhere}
 body.dark .article-body h2{background:#423221;color:#ffe8bd}body.dark .article-body h3{color:#f9c675}
 .article-body .answer-lead{font-weight:700;color:#754715}body.dark .article-body .answer-lead{color:#ffe0a2}
+.article-body img{max-width:100%;height:auto;display:block;margin:1.5rem auto;border-radius:12px}
+.article-body figure{max-width:100%;margin:1.5rem 0;text-align:center}
+.article-body figcaption{font-size:12px;color:var(--muted)}
+.article-body table{display:block;max-width:100%;overflow-x:auto;border-collapse:collapse;margin:1.5rem 0}
+.article-body th,.article-body td{border:1px solid var(--line);padding:8px 12px}
+.article-body pre{max-width:100%;overflow-x:auto;padding:18px;border-radius:12px;background:#29251f;color:#fff8ea;white-space:pre-wrap}
+.article-body code{overflow-wrap:anywhere}
+.article-body a,.source-note a{color:#ad6815;text-decoration:underline;text-underline-offset:3px}
+.article-body blockquote{margin:1.5rem 0;padding:.5rem 1.25rem;border-left:4px solid var(--accent);background:var(--accent-soft)}
+.source-note{margin:3rem 0;color:var(--muted);font-size:13px}

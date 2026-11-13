@@ -1,0 +1,13 @@
+{
+  "title": "정보보호전문 실습교육 네트워크 2",
+  "date": "2026-09-21",
+  "category": "papers-conferences",
+  "excerpt": "Kali Linux prompt에서 github에 push 하는 방법을 배웠다. //System에서 사용할 전역 User Name과 이메일 등록 $ sudo apt install git $ git …",
+  "previewTitle": "정보보호전문 실습교육 네트워크 2",
+  "previewExcerpt": "Kali Linux prompt에서 github에 push 하는 방법을 배웠다. //System에서 사용할 전역 User Name과 이메일 등록 $ sudo apt install git $ git …",
+  "tags": [
+    "세미나"
+  ],
+  "source": "https://ms-egg.tistory.com/3",
+  "sourceCategory": "외부활동/세미나"
+}

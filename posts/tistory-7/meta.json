@@ -1,0 +1,13 @@
+{
+  "title": "웹해킹 문제풀이 (1)",
+  "date": "2026-10-06",
+  "category": "ctf-wargame",
+  "excerpt": "Request Anatomy 문제요약:평범해 보이는 사내 공지페이지이다. 딱히 별 다른 기능은 없다. Write up: 맨 처음 페이지에 들어가고 내가 할 수 있는 행동들을 생각했다. 우선 사용자 …",
+  "previewTitle": "웹해킹 문제풀이 (1)",
+  "previewExcerpt": "Request Anatomy 문제요약:평범해 보이는 사내 공지페이지이다. 딱히 별 다른 기능은 없다. Write up: 맨 처음 페이지에 들어가고 내가 할 수 있는 행동들을 생각했다. 우선 사용자 …",
+  "tags": [
+    "웹"
+  ],
+  "source": "https://ms-egg.tistory.com/7",
+  "sourceCategory": "STUDY/웹"
+}

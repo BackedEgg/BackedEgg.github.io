@@ -1,0 +1,18 @@
+<h3>문제설명:</h3>
+<p>RS256으로 토큰에 서명하는 모임 회원 포털이다. 다른 서비스가 검증에 쓸 수 있도록 공개키도 공개되어있다.</p>
+<h3>목표:&nbsp;</h3>
+<p>공개되어&nbsp;있는&nbsp;키를&nbsp;이용해&nbsp;토큰&nbsp;서명을&nbsp;위조하라. <br><br>페이지에&nbsp;들어가&nbsp;증명서&nbsp;발급을&nbsp;누르면&nbsp;토큰이&nbsp;나온다. <br>하지만&nbsp;창구&nbsp;내부&nbsp;자료는&nbsp;admin이&nbsp;아니기에&nbsp;볼&nbsp;수&nbsp;없다. <br><br>우선&nbsp;token을&nbsp;디코딩해보았다. <br>헤더</p>
+<pre><code>{
+  "alg": "RS256",
+  "typ": "JWT"
+}</code></pre>
+<p><br>페이로드</p>
+<pre><code>{
+  "username": "student01",
+  "role": "member"
+}</code></pre>
+<p><br>뒤는&nbsp;서명 <br>으로&nbsp;이루어져있다. <br><br>가장&nbsp;먼저&nbsp;시도해볼&nbsp;수&nbsp;있는&nbsp;공격은&nbsp;alg를&nbsp;none으로&nbsp;바꾸는&nbsp;공격이다. <br>하지만&nbsp;되지&nbsp;않았다. <br><br>페이지를&nbsp;다시&nbsp;상세히&nbsp;보니&nbsp;</p>
+<pre><code>GET  /api/public-key         창구 인영(공개 도장) 열람</code></pre>
+<p><br>라는&nbsp;문구가&nbsp;존재했다. <br><br>들어가보니&nbsp;public&nbsp;key&nbsp;가&nbsp;존재했다. <br>이&nbsp;public&nbsp;key&nbsp;를&nbsp;재미나이에게&nbsp;붙여넣어주니&nbsp;alg를&nbsp;hs256으로&nbsp;바꾸는&nbsp;공격을&nbsp;추천해주었고&nbsp;이를&nbsp;이용하니&nbsp;문제가&nbsp;풀렸다. <br><br>이것을&nbsp;이해하기&nbsp;위해서는&nbsp; <br>우선&nbsp;rs256이라는&nbsp;알고리즘에&nbsp;대해서&nbsp;알&nbsp;필요가&nbsp;있었다. <br>간단히&nbsp;설명하자면&nbsp;rs256은&nbsp;비대칭&nbsp;서명&nbsp;알고리즘이다.</p>
+<p><br>이때&nbsp;비대칭&nbsp;방식이란? <br>토큰을&nbsp;발급하는&nbsp;서버는&nbsp;개인키로&nbsp;서명하고,&nbsp;검증하는&nbsp;서버는&nbsp;공개키로&nbsp;서명만&nbsp;검증한다. <br>정상적인&nbsp;알고리즘이라면&nbsp;공개키는&nbsp;외부에&nbsp;유출되어도&nbsp;토큰을&nbsp;위조할&nbsp;수&nbsp;없으므로&nbsp;유출이&nbsp;되어도&nbsp;상관이없다. <br><br>그&nbsp;다음&nbsp;hs256에서도&nbsp;알아야했었는데 <br>이것&nbsp;또한&nbsp;간단히&nbsp;설명하자면&nbsp;hs256은&nbsp;대칭&nbsp;서명&nbsp;알고리즘이다. <br>토큰을&nbsp;생성하는&nbsp;서버와&nbsp;이를&nbsp;검증하는&nbsp;서버가&nbsp;똑같은&nbsp;하나의&nbsp;비밀&nbsp;키를&nbsp;공유한다는&nbsp;것이다.</p>
+<p><br>따라서, <br>alg&nbsp;를&nbsp;hs256으로&nbsp;바꾸고&nbsp;공개키를&nbsp;활용해&nbsp;서명을&nbsp;위조해서&nbsp;발급&nbsp;받은&nbsp;토큰을&nbsp;서버는&nbsp;일치한다고&nbsp;판단해버린것이다.</p>

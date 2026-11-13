@@ -1,0 +1,13 @@
+{
+  "title": "Web - Numeric Lookup",
+  "date": "2026-11-10",
+  "category": "ctf-wargame",
+  "excerpt": "문제설명: 부서방 비품 재고를 번호로 조회하는 내부 단말이다. 대장에는 1~5번 품목이 올라와 있다. 목표 : 대장에 올라와 있지 않은 비품 기록을 꺼내라 여기서 조회를 할 수 있다. 비품에 없는 …",
+  "previewTitle": "Web - Numeric Lookup",
+  "previewExcerpt": "문제설명: 부서방 비품 재고를 번호로 조회하는 내부 단말이다. 대장에는 1~5번 품목이 올라와 있다. 목표 : 대장에 올라와 있지 않은 비품 기록을 꺼내라 여기서 조회를 할 수 있다. 비품에 없는 …",
+  "tags": [
+    "Write up"
+  ],
+  "source": "https://ms-egg.tistory.com/30",
+  "sourceCategory": "STUDY/Write up"
+}
