@@ -1,0 +1,43 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Raw_Egg의 개발·보안 학습 기록"><meta name="theme-color" content="#fff9ed"><title>데프콘 34 - AI Nightmare Hacking at 0 Hour · Raw_Egg</title><link rel="stylesheet" href="../../style.css"><link rel="stylesheet" href="../../egg-extra.css"><script src="../../app.js" defer></script></head><body><a class="skip" href="#main">본문으로 건너뛰기</a><aside class="rail"><a class="logo" href="../../" aria-label="Raw_Egg 홈"><span class="logo-shape"><i></i></span><span>Raw_Egg<span class="period">.</span></span></a><nav class="rail-nav" aria-label="주 메뉴"><a  href="../../">Home</a><a aria-current="page" href="../../archive/">Records</a><a  href="../../categories/">Categories</a><a  href="../../about/">About</a></nav><div class="rail-bottom"><span>make me baked<span class="period">.</span></span><button class="theme" type="button" aria-label="색상 모드 전환">◐ <span>Dark</span></button></div></aside><header class="mobile-head"><a href="../../">🥚 Raw_Egg.</a><button class="menu" type="button" aria-expanded="false" aria-label="메뉴 열기">☰</button></header><main id="main" class="main"><article class="article"><a class="back" href="../../archive/">← 기록으로</a><header class="article-head"><span class="kicker">2026-11-17 · RECORD</span><h1>데프콘 34 - AI Nightmare Hacking at 0 Hour</h1><p>요즘 보안분야에서 AI를 활용하지 않는 사람을 볼 수가 없다. 각종 보안문제들부터, CTF까지.. 근데 AI를 활용해 CTF를 풀다보면 별의 별 생각이 다 든다. AI가 다 해주고 나보다 고능한데 …</p></header><div class="article-body"><p>요즘 보안분야에서 AI를 활용하지 않는 사람을 볼 수가 없다.</p>
+<p>각종 보안문제들부터, CTF까지..</p>
+<p>근데 AI를 활용해 CTF를 풀다보면 별의 별 생각이 다 든다.</p>
+<p>AI가 다 해주고 나보다 고능한데 도대체 내가 뭘 해야하지??</p>
+<p>왜 똑같은 AI를 사용하는것 같은데 이렇게 차이가 나지??</p>
+<p>&nbsp;</p>
+<p>다행히 나만 이런생각을 한건 아닌가보다.. 데프콘에서도 9일전에 이와 비슷한 주제로 발표했다.</p>
+<p>&nbsp;</p>
+<p><span>발표자는 AI가 쉬운 버그만 찾을 수 있다는 평가와 달리, 실제 버그바운티 현장에서 AI를 활용한 도구들이 높은 성과를 내는 모습을 보고 관심을 갖게 되었다고 한다. 이를 계기로 자신의 취약점 탐색 과정에 AI를 도입하는 실험을 시작했다.</span></p>
+<p><span>처음에는 AI에 단순히 “이 애플리케이션을 해킹해 줘”라고 요청했지만 원하는 결과를 얻지 못했다. 이후에는 AI가 작업을 수행할 수 있도록 환경과 지침을 구체적으로 구성했다. 테스트가 허용된 범위, 여러 사용자 계정의 자격 증명, 자신이 기존에 사용하던 점검 방법론 등을 제공한 것이다. 단순히 명령을 내리는 것이 아니라, 자신의 경험과 노하우를 AI가 이해하고 실행할 수 있는 형태로 바꾸려는 시도였다.</span></p>
+<p>&nbsp;</p>
+<p><span>그 결과 AI는 2주 동안 인증 우회, XSS, IDOR, 비즈니스 로직 문제, 계정 탈취 등 다양한 취약점을 찾아냈다. AI의 결과를 바탕으로 제출한 14건 가운데 11건이 유효하고 중복되지 않은 취약점으로 인정됐다고 한다. 발표자는 이 과정에서 직접 취약점을 찾기보다는 AI가 발견한 결과를 재현하고 검증하는 역할에 집중했다.</span></p>
+<p><span>이 경험을 계기로 발표자는 단순히 해킹해줘 라고 요청하는 수준을 넘어, 여러 기능이 연결된 하나의 시스템을 만들기 시작했다. 기존에 사용하던 자동화 도구와 데이터를 MCP 서버를 통해 연결하고, 작업별 하위 에이전트와 추가 기능을 구성했다. 생성되는 결과가 많아지면서 발견 사항을 분류하고 우선순위를 정하는 과정도 필요해졌다.</span></p>
+<p>&nbsp;</p>
+<p><span>특히 신경을 쓴 부분은 메모리와 컨텍스트 관리였다. AI가 이미 수행한 작업을 잊고 반복하거나 중요한 맥락을 놓치면 비용은 늘고 성과는 줄어들기 때문이다. 따라서 좋은 모델을 고르는 것만큼, 모델에 어떤 정보를 전달하고 작업 상태를 어떻게 유지할지 설계하는 일도 중요해졌다고 설명했다.</span></p>
+<p>&nbsp;</p>
+<p><span>발표에서 소개한 사례들을 보면 AI는 개별적인 오류를 발견하는 데 그치지 않고, 서로 다른 기능 사이의 관계를 분석해 취약점의 영향 범위를 확장하기도 했다. 특히 AI 서비스 사례에서는 모델 자체의 탈옥보다 애플리케이션의 접근통제가 문제가 됐다. 조직별 권한 검증이 제대로 이루어지지 않아 다른 조직의 데이터나 기능에 접근할 수 있었던 것이다. AI가 조직 내부의 여러 데이터와 연결되어 있다면, 이러한 권한 경계의 실패가 더 큰 피해로 이어질 수 있다는 설명이었다.</span></p>
+<p>&nbsp;</p>
+<p><span>그렇다고 AI가 항상 정확한 결과를 내는 것은 아니다. 허용된 테스트 범위를 벗어나거나, 서비스가 의도적으로 제공하는 동작을 취약점으로 오인하기도 한다. 실제로는 영향이 작거나 없는 문제를 심각한 취약점으로 평가하는 경우도 있다고 한다.</span></p>
+<p>&nbsp;</p>
+<p><span>여기서 발표자가 강조한 것은 비즈니스 로직과 비즈니스 맥락의 차이다. AI가 기능의 동작을 분석할 수 있다고 해도, 해당 서비스에서 그 기능이 왜 허용되는지까지 정확히 이해하는 것은 아닐 수 있다. 따라서 발견한 문제가 실제 취약점인지, 어떤 피해로 이어질 수 있는지는 여전히 사람이 검토해야 한다.</span></p>
+<p><span>발표자가 제시한 실무적인 팁은 다음과 같다.</span></p>
+<ol>
+<li><b><span>격리된 환경에서 실행하기</span></b><br><span>AI의 잘못된 명령 실행이나 데이터 훼손에 대비해 실행 환경을 분리하고 백업을 준비해야 한다.</span></li>
+<li><b><span>고정된 절차뿐 아니라 판단 방법도 전달하기</span></b><br><span>정해진 순서만 따르게 하기보다, 상황이 달라져도 적용할 수 있는 점검 방법론을 제공하는 것이 중요하다.</span></li>
+<li><b><span>정찰 정보를 충실하게 제공하기</span></b><br><span>대상에 관한 맥락이 부족하면 AI가 추론하고 판단할 수 있는 범위도 제한된다.</span></li>
+<li><b><span>여러 모델 활용하기</span></b><br><span>작업별 특성과 비용을 고려해 적합한 모델을 활용할 필요가 있다.</span></li>
+<li><b><span>실행 기록 남기기</span></b><br><span>이미 시도한 작업과 결과를 저장해 중복 실행과 토큰 낭비를 줄여야 한다.</span></li>
+<li><b><span>장시간 작업도 중간에 확인하기</span></b><br><span>최종 목표에 도달하기 전 발견한 중요한 결과를 놓치지 않도록 진행 상황을 살펴야 한다.</span></li>
+</ol>
+<p><span>이러한 변화 속에서 사람의 역할은 취약점을 직접 찾는 일뿐 아니라 결과 분류, 보고서 검증과 제출, 컨텍스트와 메모리 관리, 방법론 개선으로 넓어지고 있었다. AI가 많은 작업을 수행할수록 그 결과를 정리하고 올바르게 판단하는 능력이 중요해진다는 뜻이다.</span></p>
+<p><span>발표자는 취약점 공개 이후 방어자가 대응할 수 있는 시간도 짧아지고 있다고 설명했다. 기존에 사람이 오랜 시간을 들여 수행하던 패치 분석이나 취약점 재현을 AI가 훨씬 빠르게 처리할 수 있기 때문이다. 공격자가 취약점을 분석하고 활용하는 속도가 빨라지는 만큼, 방어자에게 주어지는 대응 시간은 줄어든다.</span></p>
+<p><span>동시에 제출되는 보고서의 양도 증가한다. 여기에는 실제 취약점뿐 아니라 충분히 검증되지 않은 AI 생성 보고서도 포함된다. 이런 보고서가 많아지면 분류와 검증에 부담이 커지고, 유효한 보고서를 신속하게 처리하기도 어려워질 수 있다. 따라서 경쟁에서 앞서기 위해 AI의 결과를 검증 없이 제출해서는 안 된다는 점도 강조했다.</span></p>
+<p><span>발표의 핵심은 AI가 해커를 대체하는지보다, AI로 인해 보안 업무의 속도가 얼마나 빨라지는지가 더 시급한 문제라는 것이었다. 공격자가 AI를 활용해 취약점을 더 빠르게 분석한다면, 개발자와 방어자 역시 예방과 검증, 대응 과정에 AI를 활용해야 한다는 결론으로 발표를 마쳤다.</span></p>
+<p>&nbsp;</p>
+<p>원본링크:</p>
+<p><a href="https://www.youtube.com/watch?v=0pJet2AADxM">https://www.youtube.com/watch?v=0pJet2AADxM</a></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>REVIEW</p>
+<p>&nbsp;</p>
+<p>솔직히 주제가 공감이 너무 갔다. 특히 요즘 AI를 활용해서 취약점 제보하는 프로젝트를 하고 있는데 단순하게 해킹해달라고 하면 아무리 dabyreak blue 여도 해주지 않는다. 그래서 취약점을 찾고 제보해달라고 하면 정말 다양한 취약점을 찾아주는데 이를 검수하지않고 일명 '난사'를 하게 되면 정말 많은 reject를 당할 수 있다. (실제로 많이 reject 당햇다..) AI가 정말로 취약한 취약점을 찾줄때도 있지만, 프로그램, 혹은 시스템이 허용한 부분까지도 취약점이라고 하는경우가 있고 작은 문제도 큰것처럼 보고하기도 한다. 난사를 해도 답장이 빨리 오지않아 보안에 관심이 없나 이런 생각을 많이 했는데 난사를 당하는 입장은 고려하지못한것 같아 조금 부끄러웠다. 또한 취약점을 제보한것중 상당부분이 중복된 제보라고 했는데 나와 같은 사람이 많은것 같다는 동질감(?)도 많이 느꼈다.</p>
+<p>그러나 진짜로 high~ critical 의 취약점을 찾아주지못하는걸 보고 내가 AI를 잘 활용하지 못한다는 기분이 들었다. 발표처럼 여러 모델을 활용하고 방법론을 만들어줘야겠다고 생각했다.</p></div><p class="source-note">원문: <a href="https://ms-egg.tistory.com/38" target="_blank" rel="noopener noreferrer">Tistory ↗</a></p><a class="back" href="../../archive/">← 기록으로</a></article><footer><span>© 2026 Raw_Egg</span><a href="https://github.com/BackedEgg" target="_blank" rel="noopener noreferrer">GitHub ↗</a></footer></main></body></html>
