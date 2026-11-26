@@ -1,5 +1,5 @@
 {
-  "title": "LLM은 문장을 어떻게 읽을까? NumPy로 GPT-2를 구현해 봤다",
+  "title": "Numpy로 GPT-2 만들기",
   "date": "2026-11-26",
   "category": "development",
   "excerpt": "토큰 ID 3797에서 다음 토큰 floor까지, GPT-2의 계산을 NumPy로 따라가고 Hugging Face의 출력과 비교해 봤다.",
@@ -8,5 +8,6 @@
     "GPT-2",
     "NumPy",
     "Transformer"
-  ]
+  ],
+  "source": "https://ms-egg.tistory.com/40"
 }
